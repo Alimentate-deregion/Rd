@@ -229,6 +229,13 @@ def fmt_num(v, dec=0):
     if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
     return f"{v:,.{dec}f}"
 
+def fmt_ha(v):
+    """Formato inteligente para hectáreas."""
+    if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
+    if v >= 10000:  return f"{v:,.0f} Ha"
+    if v >= 100:    return f"{v:,.1f} Ha"
+    return f"{v:,.2f} Ha"
+
 def fmt_pct(v, dec=1):
     if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
     return f"{v:.{dec}f}%"
@@ -723,7 +730,7 @@ with tab3:
                     x=sub["anio"], y=vals, mode="lines+markers", name=reg,
                     line=dict(color=color_map_r[reg], width=2),
                     marker=dict(size=5, color=color_map_r[reg]),
-                    hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.0f}} Ta.<extra></extra>",
+                    hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.1f}} Ha<extra></extra>",
                 ))
             if not nac_hist.empty:
                 fig_hist.add_trace(go.Scatter(
@@ -731,14 +738,14 @@ with tab3:
                     mode="lines", name="Total nacional",
                     line=dict(color="#FFD166",width=2,dash="dash"),
                     yaxis="y2",
-                    hovertemplate="Nacional: %{y:,.0f} Ta.<extra></extra>",
+                    hovertemplate="Nacional: %{y:,.1f} Ha<extra></extra>",
                 ))
             fig_hist.update_layout(
                 template="plotly_dark", paper_bgcolor="#171A21", plot_bgcolor="#171A21",
                 margin=dict(l=10,r=10,t=10,b=10), height=380,
                 xaxis=dict(showgrid=False, dtick=2),
-                yaxis=dict(title="Tareas (región)", gridcolor="#2B3240"),
-                yaxis2=dict(title="Tareas (nacional)", overlaying="y", side="right",
+                yaxis=dict(title="Hectáreas (región)", gridcolor="#2B3240"),
+                yaxis2=dict(title="Hectáreas (nacional)", overlaying="y", side="right",
                             showgrid=False, tickfont=dict(color="#FFD166")),
                 legend=dict(orientation="h", y=1.1, x=0, font=dict(size=9)),
             )
@@ -759,7 +766,7 @@ with tab3:
                 x=[str(c) for c in heat_df.columns],
                 y=heat_df.index.tolist(),
                 colorscale=[[0,"#0F1116"],[0.2,"#1A2535"],[0.5,"#2D5986"],[0.8,"#4DA3FF"],[1,"#74C69D"]],
-                hovertemplate="Región: %{y}<br>Año: %{x}<br>%{z:,.0f} Ta.<extra></extra>",
+                hovertemplate="Región: %{y}<br>Año: %{x}<br>%{z:,.1f} Ha<extra></extra>",
                 colorbar=dict(tickfont=dict(color="#9EABC0",size=9),
                               bgcolor="#12161D",bordercolor="#2B3240"),
             ))
@@ -775,7 +782,7 @@ with tab3:
         <div class="method-note">
           <b>Fuente:</b> Consolidado Regional de Siembra, Cosecha y Producción 2000–2024.
           Ministerio de Agricultura, Departamento de Economía Agropecuaria y Estadísticas.
-          Unidad: Tareas. <b>Nota:</b> La región "Este" agrupa Yuma + Higuamo + Ozama
+          Unidad original: <b>Tareas</b> (convertidas a Hectáreas en este visor, factor 0.062886). <b>Nota:</b> La región "Este" agrupa Yuma + Higuamo + Ozama
           tal como aparece en la fuente original — no puede desagregarse con los datos disponibles.
         </div>""", unsafe_allow_html=True)
 
@@ -809,7 +816,7 @@ with tab3:
                     </span>
                   </div>
                   <div style="font-size:0.72rem;color:#6B7280;">
-                    {fmt_num(row['v0'])} → {fmt_num(row['v1'])} Ta.
+                    {fmt_num(row['v0'],1)} → {fmt_num(row['v1'],1)} Ha
                   </div>
                 </div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
@@ -995,5 +1002,11 @@ st.markdown("""
   · Ministerio de Agricultura de la República Dominicana
   · Cartografía ONE/IGN · Vías OSM/Geofabrik
   | FAO UTF-COL-178 / SARA · Visor Territorial Agroalimentario RD
+  <br><span style="color:#3A4558;">
+  📐 Las superficies se presentan en <b>hectáreas</b> (Ha).
+  Los datos originales del RENAGRO y el Consolidado SC&amp;P están en <b>tareas</b>
+  (unidad oficial dominicana). Factor de conversión aplicado: 1 tarea = 0.062886 Ha
+  (equivale a 628.86 m²). 1 hectárea = ~15.9 tareas.
+  </span>
 </div>
 """, unsafe_allow_html=True)
