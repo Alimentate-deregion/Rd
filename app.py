@@ -1,6 +1,6 @@
 """
 Visor Territorial Agroalimentario — República Dominicana
-Fuente: RENAGRO 2024 + Consolidado Regional SC y P 2000–2024
+Fuente: RENAGRO 2024 + Consolidado Regional SC y P 2000-2024
 Ministerio de Agricultura de la República Dominicana
 """
 
@@ -23,13 +23,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-BASE_DIR        = Path("Datos")
-RUTA_IND        = BASE_DIR / "indicadores_regionales.parquet"
-RUTA_AGG        = BASE_DIR / "consolidado_agg.parquet"
-RUTA_NAC        = BASE_DIR / "consolidado_nacional.parquet"
-RUTA_REN        = BASE_DIR / "renagro_master.parquet"
-RUTA_VIAS_JSON  = BASE_DIR / "vias_coords.json"
-RUTA_REG_JSON   = BASE_DIR / "regiones_coords.json"
+BASE_DIR       = Path("Datos")
+RUTA_IND       = BASE_DIR / "indicadores_regionales.parquet"
+RUTA_AGG       = BASE_DIR / "consolidado_agg.parquet"
+RUTA_NAC       = BASE_DIR / "consolidado_nacional.parquet"
+RUTA_REN       = BASE_DIR / "renagro_master.parquet"
+RUTA_VIAS_JSON = BASE_DIR / "vias_coords.json"
+RUTA_REG_JSON  = BASE_DIR / "regiones_coords.json"
 
 # ─────────────────────────────────────────────────────────────────
 # KEEP-ALIVE
@@ -114,27 +114,33 @@ st.markdown("""
 # ─────────────────────────────────────────────────────────────────
 
 CULTIVOS_RENAGRO = [
-    "Arroz","Plátano","Cacao","Café","Yuca dulce",
-    "Maíz","Caña de azúcar","Yuca amarga",
+    "Arroz","Platano","Cacao","Cafe","Yuca dulce",
+    "Maiz","Cana de azucar","Yuca amarga",
 ]
-CULTIVOS_CONSOLIDADO = [
-    "Arroz","Plátano","Cacao","Café","Yuca","Maíz",
-    "Frijol rojo","Frijol negro","Guandúl","Batata",
-    "Aguacate","Coco","Guineo/Banano","Tabaco",
-]
+# Productos con datos reales en el consolidado (>= 5 anos de siembra)
+CULTIVOS_CONSOLIDADO = sorted([
+    "Aguacate","Ajo","Ajies","Arroz","Auyama","Berenjena","Batata",
+    "Cebolla","Frijol rojo","Frijol blanco","Frijol negro","Coco",
+    "Chinola","Guineo","Lechosa","Guandul","Sorgo","Yuca","Zanahoria",
+    "Yautia","Toronja","Naranja dulce","Papa","Pina","Pepino","Platano",
+    "Melon","Maiz","Mani","Name","Tayota","Tomate ensalada","Repollo",
+    "Tomate industrial","Tindora","Rabano","Remolacha","Lechuga",
+    "Coliflor","Cundeamor","Brocoli","Limon agrio","Molondron","Oregano",
+    "Mandarina","Pitahaya","Guanabana","Guayaba","Granadillo","Apio",
+    "Bangana","Calabacin","Cereza","Mango","Mapuey","Sandia","Zapote",
+])
 PILAR_LABELS = {
     "1. Capacidad Productiva":          "Capacidad Productiva",
     "3. Servicios de Apoyo":            "Servicios de Apoyo",
     "4. Financiamiento":                "Financiamiento",
-    "5. Organización y Vulnerabilidad": "Organización y Vulnerabilidad",
+    "5. Organizacion y Vulnerabilidad": "Organizacion y Vulnerabilidad",
 }
-# Indicadores directos de fuente por pilar (sin índices calculados)
 IND_DIRECTOS = {
     "1. Capacidad Productiva": [
         "Productores totales",
         "Superficie agropecuaria total",
-        "Área sembrada total cultivos RENAGRO",
-        "Producción leche litros/día",
+        "Area sembrada total cultivos RENAGRO",
+        "Produccion leche litros/dia",
         "Total fuerza laboral agropecuaria",
         "% mujeres en fuerza laboral",
         "Trabajadores hombres permanentes",
@@ -143,16 +149,16 @@ IND_DIRECTOS = {
         "Trabajadores mujeres temporales",
     ],
     "3. Servicios de Apoyo": [
-        "Parcelas con asistencia técnica",
-        "% parcelas con asistencia técnica",
+        "Parcelas con asistencia tecnica",
+        "% parcelas con asistencia tecnica",
     ],
     "4. Financiamiento": [
-        "Productores con crédito",
-        "% productores con crédito",
+        "Productores con credito",
+        "% productores con credito",
     ],
-    "5. Organización y Vulnerabilidad": [
-        "Productores en organización rural",
-        "% productores en organización rural",
+    "5. Organizacion y Vulnerabilidad": [
+        "Productores en organizacion rural",
+        "% productores en organizacion rural",
         "Productores con falta de alimento",
         "% productores con inseguridad alimentaria",
     ],
@@ -161,24 +167,24 @@ EXCLUIR_CALCULADOS = {
     "Score Capacidad Productiva (0-100)",
     "Score Servicios de Apoyo (0-100)",
     "Score Financiamiento (0-100)",
-    "Score Organización y Vulnerabilidad (0-100)",
-    "Índice de Preparación Territorial (0-100)",
-    "% área Arroz en total regional",
-    "% área Plátano en total regional",
-    "% área Cacao en total regional",
-    "% área Café en total regional",
-    "% área Yuca dulce en total regional",
-    "% área Maíz en total regional",
-    "% área Caña de azúcar en total regional",
-    "N° cultivos con participación >5%",
-    "Relación trabajadores / productores",
+    "Score Organizacion y Vulnerabilidad (0-100)",
+    "Indice de Preparacion Territorial (0-100)",
+    "% area Arroz en total regional",
+    "% area Platano en total regional",
+    "% area Cacao en total regional",
+    "% area Cafe en total regional",
+    "% area Yuca dulce en total regional",
+    "% area Maiz en total regional",
+    "% area Cana de azucar en total regional",
+    "N cultivos con participacion >5%",
+    "Relacion trabajadores / productores",
     "% leche para autoconsumo",
     "% aprovechamiento Arroz",
-    "% aprovechamiento Plátano",
+    "% aprovechamiento Platano",
     "% aprovechamiento Cacao",
-    "% aprovechamiento Café",
+    "% aprovechamiento Cafe",
     "% aprovechamiento Yuca dulce",
-    "% aprovechamiento Maíz",
+    "% aprovechamiento Maiz",
     "Superficie promedio por productor",
 }
 COLORES_REG = [
@@ -195,7 +201,7 @@ COLOR_VIAS = {
 }
 
 # ─────────────────────────────────────────────────────────────────
-# CARGA DE DATOS — todo cacheado
+# CARGA DE DATOS
 # ─────────────────────────────────────────────────────────────────
 
 @st.cache_data(show_spinner=False)
@@ -210,6 +216,19 @@ def cargar_datos():
 
 ind, agg, nac, ren, vias_json, reg_json = cargar_datos()
 
+# Lista de productos con datos reales en el consolidado
+@st.cache_data(show_spinner=False)
+def productos_con_datos(agg):
+    return sorted(
+        agg[agg["siembra"] > 0]
+        .groupby("producto")["anio"].nunique()
+        .reset_index()
+        .query("anio >= 5")["producto"]
+        .tolist()
+    )
+
+PRODS_VALIDOS = productos_con_datos(agg)
+
 @st.cache_data(show_spinner=False)
 def build_pivot(ind):
     return ind[~ind["indicador"].isin(EXCLUIR_CALCULADOS)].pivot_table(
@@ -217,8 +236,7 @@ def build_pivot(ind):
         values="valor", aggfunc="first"
     ).reset_index()
 
-pivot        = build_pivot(ind)
-REGIONES_LIST = sorted(ind["cod_region"].unique())
+pivot         = build_pivot(ind)
 NOMBRES_REG   = {cod: d["nombre"] for cod, d in reg_json.items()}
 
 # ─────────────────────────────────────────────────────────────────
@@ -228,13 +246,6 @@ NOMBRES_REG   = {cod: d["nombre"] for cod, d in reg_json.items()}
 def fmt_num(v, dec=0):
     if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
     return f"{v:,.{dec}f}"
-
-def fmt_ha(v):
-    """Formato inteligente para hectáreas."""
-    if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
-    if v >= 10000:  return f"{v:,.0f} Ha"
-    if v >= 100:    return f"{v:,.1f} Ha"
-    return f"{v:,.2f} Ha"
 
 def fmt_pct(v, dec=1):
     if v is None or (isinstance(v, float) and np.isnan(v)): return "—"
@@ -246,102 +257,112 @@ def get_val(cod, indicador):
     return row.iloc[0][indicador]
 
 def ftag(txt):
-    return f'<span class="fuente-tag">📋 {txt}</span>'
+    return f'<span class="fuente-tag">{txt}</span>'
+
+def unit_label(unidad):
+    """Etiqueta legible para la unidad."""
+    MAP = {
+        "Hectareas": "Ha",
+        "Hectáreas": "Ha",
+        "Numero":    "",
+        "Número":    "",
+        "%":         "%",
+        "Litros/dia":"L/dia",
+        "Litros/día":"L/dia",
+        "Personas":  "personas",
+        "Ha/productor":"Ha/prod.",
+    }
+    return MAP.get(unidad, unidad or "")
 
 # ─────────────────────────────────────────────────────────────────
-# MAPA — construir figura (cacheada por indicador)
-# Máximo 16 traces: 10 regiones + 6 clases de vías
+# MAPA (cacheado por indicador + vias)
+# max 17 traces: 10 regiones + 1 centroides + 6 clases de vias
+# Escala verde -> amarillo -> rojo (mayor = verde, menor = rojo)
 # ─────────────────────────────────────────────────────────────────
 
 @st.cache_data(show_spinner=False)
 def build_mapa(ind_sel, pilar_sel, mostrar_vias):
-    sub = ind[(ind["pilar"]==pilar_sel)&(ind["indicador"]==ind_sel)][
-        ["cod_region","valor","unidad"]
-    ].set_index("cod_region")
+    sub = ind[
+        (ind["pilar"] == pilar_sel) & (ind["indicador"] == ind_sel)
+    ][["cod_region","valor","unidad"]].set_index("cod_region")
 
     vmin = sub["valor"].min()
     vmax = sub["valor"].max()
+    unidad = sub["unidad"].iloc[0] if not sub.empty else ""
+    ul = unit_label(unidad)
 
     fig = go.Figure()
 
-    # ── Trace 1–10: un polígono por región (fill + borde) ─────────────
+    # -- Poligonos: un trace por region --
     for cod, d in reg_json.items():
-        val  = sub.loc[cod, "valor"]  if cod in sub.index else np.nan
-        unit = sub.loc[cod, "unidad"] if cod in sub.index else ""
-        norm = (val - vmin) / (vmax - vmin + 1e-9) if pd.notna(val) else 0
+        val  = sub.loc[cod, "valor"] if cod in sub.index else np.nan
+        norm = (val - vmin) / (vmax - vmin + 1e-9) if pd.notna(val) else 0.5
 
-        # Escala verde agrícola: #0D2818 → #52B788
-        r = int(13  + (82  - 13)  * norm)
-        g = int(40  + (183 - 40)  * norm)
-        b = int(24  + (136 - 24)  * norm)
-        fill_color = f"rgba({r},{g},{b},0.80)"
+        # Verde -> amarillo -> rojo  (norm=1 verde, norm=0 rojo)
+        if norm >= 0.5:
+            t = (norm - 0.5) * 2          # 0->0.5 en [0,1]
+            r = int(255 * (1 - t))
+            g = int(180 + (75 * t))       # 180->255
+            b = int(20  * (1 - t))
+        else:
+            t = norm * 2                   # 0->1 en [0,1]
+            r = int(220 - (20 * t))        # 220->200
+            g = int(50  + (130 * t))       # 50->180
+            b = 15
+        fill_color = f"rgba({r},{g},{b},0.78)"
 
-        hover = (f"<b>{d['nombre']}</b><br>"
-                 f"{ind_sel}<br>"
-                 f"{fmt_num(val,1)} {unit}")
+        val_txt = f"{val:,.1f} {ul}" if pd.notna(val) else "Sin dato"
+        hover   = f"<b>{d['nombre']}</b><br>{ind_sel}<br>{val_txt}"
 
         fig.add_trace(go.Scattermapbox(
             lon=d["lons"], lat=d["lats"],
-            mode="lines",
-            fill="toself",
+            mode="lines", fill="toself",
             fillcolor=fill_color,
-            line=dict(color="rgba(180,220,180,0.7)", width=1.0),
+            line=dict(color="rgba(220,230,220,0.6)", width=0.9),
             hovertemplate=hover + "<extra></extra>",
-            showlegend=False,
-            name=d["nombre"],
+            showlegend=False, name=d["nombre"],
         ))
 
-    # ── Trace 11: centroides con etiquetas ────────────────────────────
-    cx_list, cy_list, txt_list, hover_list = [], [], [], []
+    # -- Centroides con etiquetas --
+    cx_l, cy_l, txt_l, hov_l = [], [], [], []
     for cod, d in reg_json.items():
-        val  = sub.loc[cod, "valor"]  if cod in sub.index else np.nan
-        unit = sub.loc[cod, "unidad"] if cod in sub.index else ""
-        cx_list.append(d["cx"])
-        cy_list.append(d["cy"])
-        nombre_corto = (d["nombre"]
-                        .replace("Cibao ","C.")
-                        .replace("O Metropolitana","Metro"))
-        txt_list.append(nombre_corto)
-        hover_list.append(f"<b>{d['nombre']}</b><br>{fmt_num(val,1)} {unit}")
+        val  = sub.loc[cod, "valor"] if cod in sub.index else np.nan
+        cx_l.append(d["cx"])
+        cy_l.append(d["cy"])
+        txt_l.append(d["nombre"].replace("Cibao ","C.").replace("O Metropolitana","Metro"))
+        hov_l.append(f"<b>{d['nombre']}</b><br>{fmt_num(val,1)} {ul}")
 
     fig.add_trace(go.Scattermapbox(
-        lon=cx_list, lat=cy_list,
+        lon=cx_l, lat=cy_l,
         mode="markers+text",
         marker=dict(size=5, color="rgba(255,255,255,0.5)"),
-        text=txt_list,
+        text=txt_l,
         textfont=dict(size=9, color="#E8EDF5"),
         textposition="top right",
-        hovertemplate=[h + "<extra></extra>" for h in hover_list],
-        showlegend=False,
-        name="Regiones",
+        hovertemplate=[h + "<extra></extra>" for h in hov_l],
+        showlegend=False, name="Regiones",
     ))
 
-    # ── Traces 12–17: vías (uno por clase = 6 traces máximo) ──────────
+    # -- Vias --
     if mostrar_vias:
         for fclass, (color, width) in COLOR_VIAS.items():
             if fclass not in vias_json: continue
-            d = vias_json[fclass]
+            dv = vias_json[fclass]
             fig.add_trace(go.Scattermapbox(
-                lon=d["lons"], lat=d["lats"],
+                lon=dv["lons"], lat=dv["lats"],
                 mode="lines",
                 line=dict(color=color, width=width),
-                opacity=0.55,
-                hoverinfo="skip",
-                showlegend=False,
-                name=fclass,
+                opacity=0.5, hoverinfo="skip",
+                showlegend=False, name=fclass,
             ))
 
     fig.update_layout(
-        mapbox=dict(
-            style="carto-darkmatter",
-            center=dict(lat=18.9, lon=-70.2),
-            zoom=6.8,
-        ),
+        mapbox=dict(style="carto-darkmatter",
+                    center=dict(lat=18.9, lon=-70.2), zoom=6.8),
         paper_bgcolor="#0F1116",
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=460,
+        margin=dict(l=0, r=0, t=0, b=0), height=455,
     )
-    return fig
+    return fig, ul
 
 # ─────────────────────────────────────────────────────────────────
 # ENCABEZADO
@@ -354,30 +375,29 @@ st.markdown("""
   <div style="width:52px;height:52px;border-radius:10px;
       background:linear-gradient(135deg,#006B35,#22A060);
       display:flex;align-items:center;justify-content:center;
-      flex-shrink:0;font-size:1.6rem;">🇩🇴</div>
+      flex-shrink:0;font-size:1.6rem;">RD</div>
   <div>
     <div style="font-size:1.75rem;font-weight:700;color:#F0F4FA;
         letter-spacing:-0.01em;line-height:1.1;">
-      Visor Territorial Agroalimentario &middot; República Dominicana
+      Visor Territorial Agroalimentario · República Dominicana
     </div>
     <div style="font-size:0.88rem;color:#6B7280;margin-top:4px;">
       Diagnóstico de capacidades productivas regionales
-      &middot; RENAGRO 2024 + Consolidado SC&amp;P 2000–2024
-      &middot; Ministerio de Agricultura
+      · RENAGRO 2024 + Consolidado SC&amp;P 2000–2024
+      · Ministerio de Agricultura
     </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────
-# TABS
+# TABS (sin emojis)
 # ─────────────────────────────────────────────────────────────────
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🗺️ Panorama nacional",
-    "🌾 Producción y especialización",
-    "📈 Series históricas 2000–2024",
-    "📋 Perfil por región",
+tab1, tab2, tab3 = st.tabs([
+    "Panorama nacional",
+    "Producción y series históricas",
+    "Perfil por región",
 ])
 
 # ═════════════════════════════════════════════════════════════════
@@ -396,26 +416,40 @@ with tab1:
             index=0, key="pan_pilar",
         )
     with fc2:
-        opciones_ind = [i for i in IND_DIRECTOS.get(pilar_sel,[]) if i in pivot.columns]
+        # Solo indicadores que existen en el pivot
+        opciones_ind = [i for i in IND_DIRECTOS.get(pilar_sel, []) if i in pivot.columns]
         ind_sel = st.selectbox("Indicador", opciones_ind, index=0, key="pan_ind")
     with fc3:
-        mostrar_vias = st.toggle("Mostrar vías", value=True, key="pan_vias")
+        mostrar_vias = st.toggle("Mostrar vias", value=True, key="pan_vias")
     st.markdown("</div>", unsafe_allow_html=True)
 
     left_col, right_col = st.columns([1.9, 1.1], gap="small")
 
     with left_col:
+        fig_map, ul = build_mapa(ind_sel, pilar_sel, mostrar_vias)
+
+        # Unidad correcta en el titulo
         st.markdown(
-            f'<div class="panel-title">Mapa regional — {ind_sel} '
+            f'<div class="panel-title">Mapa regional — {ind_sel}'
+            f'{"  (" + ul + ")" if ul else ""} '
             f'{ftag("RENAGRO 2024")}</div>',
             unsafe_allow_html=True,
         )
-        fig_map = build_mapa(ind_sel, pilar_sel, mostrar_vias)
         st.plotly_chart(fig_map, use_container_width=True)
+
+        # Leyenda escala de color
+        st.markdown("""
+        <div style="display:flex;align-items:center;gap:6px;margin-top:0.3rem;font-size:0.78rem;color:#9EABC0;">
+          <span>Menor valor</span>
+          <div style="flex:1;height:8px;border-radius:4px;
+            background:linear-gradient(to right,#DC3215,#F5A020,#FFDC00,#74C69D);"></div>
+          <span>Mayor valor</span>
+        </div>
+        """, unsafe_allow_html=True)
 
         if mostrar_vias:
             st.markdown("""
-            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:0.3rem;
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:0.4rem;
                 font-size:0.78rem;color:#9EABC0;">
               <span><span style="display:inline-block;width:18px;height:3px;
                 background:#FF6B35;vertical-align:middle;margin-right:4px;"></span>Autopista</span>
@@ -428,8 +462,8 @@ with tab1:
 
         st.markdown("""
         <div class="method-note">
-          <b>Fuente cartográfica:</b> Polígonos regionales — ONE/IGN (RD_REG_20220630).
-          Vías — OpenStreetMap / Geofabrik (2024), autopistas, troncales y primarias.
+          <b>Fuente cartografica:</b> Poligonos regionales — ONE/IGN (RD_REG_20220630).
+          Vias — OpenStreetMap / Geofabrik (2024), autopistas, troncales y primarias.
           <b>Indicador:</b> datos directos del RENAGRO 2024, Ministerio de Agricultura RD.
         </div>
         """, unsafe_allow_html=True)
@@ -445,7 +479,7 @@ with tab1:
         for i, row in rank_df.iterrows():
             pct_w = row["valor"]/vmax_r*100 if vmax_r>0 else 0
             color = "#74C69D" if i<3 else "#4DA3FF" if i<6 else "#9EABC0"
-            unit  = row.get("unidad","") or ""
+            ul_r  = unit_label(row.get("unidad","") or "")
             st.markdown(f"""
             <div style="margin-bottom:0.55rem;">
               <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -454,7 +488,7 @@ with tab1:
                 </span>
                 <span style="font-size:0.85rem;font-weight:600;color:#F0F4FA;">
                   {fmt_num(row['valor'],1)}
-                  <span style="font-size:0.72rem;color:#6B7280;">{unit}</span>
+                  <span style="font-size:0.72rem;color:#6B7280;">{ul_r}</span>
                 </span>
               </div>
               <div style="background:#1E2530;border-radius:4px;height:6px;margin-top:3px;">
@@ -463,18 +497,19 @@ with tab1:
             </div>""", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Métricas nacionales
-        st.markdown('<div class="panel-title" style="margin-top:0.8rem;">Totales nacionales · RENAGRO 2024</div>',
-                    unsafe_allow_html=True)
+        # Metricas nacionales
+        st.markdown(
+            '<div class="panel-title" style="margin-top:0.8rem;">Totales nacionales · RENAGRO 2024</div>',
+            unsafe_allow_html=True)
         tot_prod = ren[ren["variable"]=="Productores"]["valor"].sum()
         tot_sup  = ren[ren["variable"]=="Superficie agropecuaria"]["valor"].sum()
-        tot_at   = ren[ren["variable"]=="Parcelas con asistencia técnica"]["valor"].sum()
-        tot_cred = ren[ren["variable"]=="Productores que recibieron crédito"]["valor"].sum()
+        tot_at   = ren[ren["variable"]=="Parcelas con asistencia tecnica"]["valor"].sum()
+        tot_cred = ren[ren["variable"]=="Productores que recibieron credito"]["valor"].sum()
         for label, val, unit in [
-            ("Productores",          tot_prod, ""),
-            ("Sup. agropecuaria",    tot_sup,  "Tareas"),
-            ("Parcelas con AT",      tot_at,   ""),
-            ("Productores c/crédito",tot_cred, ""),
+            ("Productores",           tot_prod, ""),
+            ("Sup. agropecuaria",     tot_sup,  "Ha"),
+            ("Parcelas con AT",       tot_at,   ""),
+            ("Productores c/credito", tot_cred, ""),
         ]:
             st.markdown(f"""
             <div class="metric-card">
@@ -484,81 +519,95 @@ with tab1:
             </div>""", unsafe_allow_html=True)
 
 # ═════════════════════════════════════════════════════════════════
-# TAB 2 — PRODUCCIÓN Y ESPECIALIZACIÓN
+# TAB 2 — PRODUCCIÓN Y SERIES HISTÓRICAS (fusionadas)
 # ═════════════════════════════════════════════════════════════════
 
 with tab2:
 
+    # ── Filtros comunes ────────────────────────────────────────
     st.markdown('<div class="filter-wrap">', unsafe_allow_html=True)
     p2c1, p2c2, p2c3 = st.columns([1.5, 1.5, 1])
     with p2c1:
         cultivo_sel = st.selectbox(
-            "Cultivo", CULTIVOS_RENAGRO + ["Todos los cultivos RENAGRO"],
-            index=0, key="prod_cult",
+            "Cultivo",
+            PRODS_VALIDOS + ["Todos los cultivos RENAGRO"],
+            index=PRODS_VALIDOS.index("Arroz") if "Arroz" in PRODS_VALIDOS else 0,
+            key="prod_cult",
         )
     with p2c2:
-        nombres_opts = list(NOMBRES_REG.values())
-        regiones_sel = st.multiselect(
-            "Filtrar regiones", options=nombres_opts,
-            default=[], placeholder="Todas", key="prod_regs",
-        )
-    with p2c3:
         metrica_sel = st.selectbox(
-            "Métrica", ["Área sembrada","Área cosechada","Productores","Parcelas"],
+            "Metrica (RENAGRO)",
+            ["Area sembrada","Area cosechada","Productores","Parcelas"],
             key="prod_met",
         )
+    with p2c3:
+        tipo_hist = st.selectbox("Tipo (historico)", ["siembra","cosecha"], index=0, key="hist_tipo")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    UNIDAD_MAP = {
-        "Área sembrada":"Tareas","Área cosechada":"Tareas",
-        "Productores":"Número","Parcelas":"Número",
+    UNIDAD_MET = {
+        "Area sembrada":"Ha","Area cosechada":"Ha",
+        "Productores":"Numero","Parcelas":"Numero",
     }
 
-    # Agregar nombre legible
+    # ── Datos RENAGRO ──────────────────────────────────────────
     ren_named = ren.copy()
     ren_named["nombre"] = ren_named["cod_region"].map(NOMBRES_REG)
 
+    # Mapear nombre de cultivo seleccionado a variable RENAGRO
+    CULT_VAR_MAP = {
+        "Arroz":          "Arroz",
+        "Platano":        "Platano",
+        "Cacao":          "Cacao",
+        "Cafe":           "Cafe",
+        "Yuca dulce":     "Yuca dulce",
+        "Maiz":           "Maiz",
+        "Cana de azucar": "Cana de azucar",
+        "Yuca amarga":    "Yuca amarga",
+    }
+    cult_ren = CULT_VAR_MAP.get(cultivo_sel, cultivo_sel)
+
     if cultivo_sel == "Todos los cultivos RENAGRO":
-        ren_sub = ren_named[ren_named["variable"].str.endswith(f"- {metrica_sel}")].copy()
+        sufijo = f"- {metrica_sel}"
+        ren_sub = ren_named[ren_named["variable"].str.endswith(sufijo)].copy()
         ren_sub["cultivo"] = ren_sub["variable"].str.replace(f" - {metrica_sel}","",regex=False)
     else:
-        ren_sub = ren_named[ren_named["variable"]==f"{cultivo_sel} - {metrica_sel}"].copy()
+        var_q   = f"{cult_ren} - {metrica_sel}"
+        ren_sub = ren_named[ren_named["variable"]==var_q].copy()
         ren_sub["cultivo"] = cultivo_sel
 
-    if regiones_sel:
-        ren_sub = ren_sub[ren_sub["nombre"].isin(regiones_sel)]
+    # ── Datos consolidado historico ────────────────────────────
+    agg_hist = agg[agg["producto"]==cultivo_sel].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
+    nac_hist = nac[(nac["producto"]==cultivo_sel)&(nac["tipo"]==tipo_hist.upper())].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
 
-    lc, rc = st.columns([1.6, 1.4], gap="small")
+    # ═══ SECCIÓN SUPERIOR: RENAGRO ═══════════════════════════════
+    st.markdown('<div class="panel-title">Distribucion regional — RENAGRO 2024</div>',
+                unsafe_allow_html=True)
 
-    with lc:
+    col_bar, col_mapa_esp = st.columns([1.3, 1.7], gap="small")
+
+    with col_bar:
         if not ren_sub.empty:
             if cultivo_sel == "Todos los cultivos RENAGRO":
-                st.markdown(
-                    f'<div class="panel-title">Distribución por cultivo y región '
-                    f'{ftag("RENAGRO 2024")}</div>', unsafe_allow_html=True)
                 fig_tree = px.treemap(
                     ren_sub,
-                    path=[px.Constant("República Dominicana"),"cultivo","nombre"],
+                    path=[px.Constant("Republica Dominicana"),"cultivo","nombre"],
                     values="valor", color="valor",
-                    color_continuous_scale=[[0,"#1A2535"],[0.3,"#2D5986"],[0.7,"#4DA3FF"],[1,"#74C69D"]],
+                    color_continuous_scale=[[0,"#1A2535"],[0.5,"#2D5986"],[1,"#74C69D"]],
                     custom_data=["cultivo","nombre","valor","unidad"],
                 )
                 fig_tree.update_traces(
                     hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]}<br>"
-                                  "%{customdata[2]:,.0f} %{customdata[3]}<extra></extra>",
+                                  "%{customdata[2]:,.1f} %{customdata[3]}<extra></extra>",
                     textfont=dict(size=11),
                 )
                 fig_tree.update_layout(
                     paper_bgcolor="#171A21",
-                    margin=dict(l=0,r=0,t=10,b=0), height=420,
+                    margin=dict(l=0,r=0,t=10,b=0), height=340,
                     coloraxis_showscale=False,
                 )
                 st.plotly_chart(fig_tree, use_container_width=True)
             else:
-                st.markdown(
-                    f'<div class="panel-title">{metrica_sel} de {cultivo_sel} por región '
-                    f'{ftag("RENAGRO 2024")}</div>', unsafe_allow_html=True)
-                ren_bar = ren_sub.sort_values("valor", ascending=True)
+                ren_bar = ren_sub.sort_values("valor",ascending=True)
                 fig_bar = go.Figure(go.Bar(
                     x=ren_bar["valor"], y=ren_bar["nombre"], orientation="h",
                     marker=dict(
@@ -567,33 +616,33 @@ with tab2:
                         line=dict(width=0),
                     ),
                     customdata=ren_bar[["nombre","valor","unidad"]].values,
-                    hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]:,.0f} %{customdata[2]}<extra></extra>",
+                    hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]:,.1f} %{customdata[2]}<extra></extra>",
                 ))
+                unidad_label = unit_label(ren_sub["unidad"].iloc[0]) if not ren_sub.empty else ""
                 fig_bar.update_layout(
                     template="plotly_dark", paper_bgcolor="#171A21", plot_bgcolor="#171A21",
-                    margin=dict(l=10,r=10,t=10,b=10), height=340,
-                    xaxis=dict(title=f"{metrica_sel} ({UNIDAD_MAP[metrica_sel]})",gridcolor="#2B3240"),
+                    margin=dict(l=10,r=10,t=10,b=10), height=320,
+                    xaxis=dict(title=f"{metrica_sel} ({unidad_label})",gridcolor="#2B3240"),
                     yaxis=dict(showgrid=False),
                 )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
                 # Aprovechamiento
-                if metrica_sel in ("Área sembrada","Área cosechada"):
-                    ap_s = ren_named[ren_named["variable"]==f"{cultivo_sel} - Área sembrada"]
-                    ap_c = ren_named[ren_named["variable"]==f"{cultivo_sel} - Área cosechada"]
+                if metrica_sel in ("Area sembrada","Area cosechada"):
+                    ap_s = ren_named[ren_named["variable"]==f"{cult_ren} - Area sembrada"]
+                    ap_c = ren_named[ren_named["variable"]==f"{cult_ren} - Area cosechada"]
                     if not ap_s.empty and not ap_c.empty:
                         ap = (ap_s[["cod_region","nombre","valor"]]
                               .rename(columns={"valor":"siembra"})
                               .merge(ap_c[["cod_region","valor"]].rename(columns={"valor":"cosecha"}),
                                      on="cod_region", how="inner"))
                         ap = ap[ap["siembra"]>0].copy()
-                        ap["pct"] = ap["cosecha"] / ap["siembra"] * 100
-                        ap = ap.sort_values("pct", ascending=False)
+                        ap["pct"] = ap["cosecha"]/ap["siembra"]*100
+                        ap = ap.sort_values("pct",ascending=False)
 
                         st.markdown(
-                            f'<div class="panel-title" style="margin-top:0.6rem;">'
-                            f'Aprovechamiento — cosechado / sembrado '
-                            f'{ftag("RENAGRO 2024 · cálculo propio")}</div>',
+                            '<div class="panel-title" style="margin-top:0.5rem;">'
+                            f'Aprovechamiento cosechado/sembrado {ftag("RENAGRO 2024 · calculo propio")}</div>',
                             unsafe_allow_html=True)
                         fig_ap = go.Figure(go.Bar(
                             x=ap["pct"], y=ap["nombre"], orientation="h",
@@ -603,68 +652,115 @@ with tab2:
                         fig_ap.add_vline(x=100,line=dict(color="#F5A020",dash="dash",width=1.5))
                         fig_ap.update_layout(
                             template="plotly_dark", paper_bgcolor="#171A21", plot_bgcolor="#171A21",
-                            margin=dict(l=10,r=10,t=5,b=10), height=220,
+                            margin=dict(l=10,r=10,t=5,b=10), height=210,
                             xaxis=dict(title="% cosechado/sembrado",gridcolor="#2B3240"),
                             yaxis=dict(showgrid=False),
                         )
                         st.plotly_chart(fig_ap, use_container_width=True)
-
                         if cultivo_sel == "Arroz":
                             st.markdown("""
                             <div class="warn-note">
-                              <b>⚠️ Nota sobre el arroz:</b> Los valores superiores al 100% no indican
-                              un error. El arroz en República Dominicana tiene <b>2–3 ciclos de cosecha
-                              por año</b>. El área cosechada acumula varios ciclos sobre la misma
-                              superficie sembrada del año de referencia, por lo que superar el 100%
-                              es agronómicamente correcto y esperado en este cultivo.
+                              <b>Nota sobre el arroz:</b> Los valores superiores al 100% no son un error.
+                              El arroz en Republica Dominicana tiene 2-3 ciclos de cosecha por año.
+                              El area cosechada acumula varios ciclos sobre la misma superficie sembrada
+                              del año de referencia del censo. Es un resultado agronómicamente correcto.
                             </div>""", unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div class="method-note">
-                              La línea naranja marca el 100%. Valores inferiores pueden indicar
-                              pérdidas, abandono de parcelas o desfase entre ciclos de siembra y
-                              cosecha. <b>Este es un cociente calculado entre dos variables del
-                              RENAGRO 2024.</b>
+                              La linea naranja marca el 100%. Valores inferiores pueden indicar perdidas,
+                              abandono de parcelas o cultivos perennes con ciclos desfasados.
+                              Este cociente se calcula entre dos variables del RENAGRO 2024.
                             </div>""", unsafe_allow_html=True)
         else:
-            st.info("Sin datos para la selección actual.")
+            st.info("Sin datos RENAGRO para la seleccion actual.")
 
-    with rc:
-        st.markdown('<div class="panel-title">Especialización territorial</div>',
-                    unsafe_allow_html=True)
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+    with col_mapa_esp:
+        # Mapa de especializacion: choropleth de area sembrada por region
+        st.markdown(
+            f'<div class="panel-title">Especializacion territorial {ftag("RENAGRO 2024")}</div>',
+            unsafe_allow_html=True)
+
         if not ren_sub.empty and cultivo_sel != "Todos los cultivos RENAGRO":
             total_nac = ren_sub["valor"].sum()
+            # Construir mapa de especializacion
+            esp_by_cod = ren_sub.set_index("cod_region")["valor"].to_dict()
+            vmax_e = max(esp_by_cod.values()) if esp_by_cod else 1
+
+            fig_esp = go.Figure()
+            for cod, d in reg_json.items():
+                val  = esp_by_cod.get(cod, 0)
+                norm = val / vmax_e if vmax_e > 0 else 0
+                r = int(13  + (45  - 13)  * norm)
+                g = int(40  + (180 - 40)  * norm)
+                b = int(24  + (80  - 24)  * norm)
+                fill = f"rgba({r},{g},{b},0.82)"
+                pct  = val/total_nac*100 if total_nac>0 else 0
+                hover = f"<b>{d['nombre']}</b><br>{fmt_num(val,1)} Ha<br>{pct:.1f}% del total nacional"
+                fig_esp.add_trace(go.Scattermapbox(
+                    lon=d["lons"], lat=d["lats"],
+                    mode="lines", fill="toself",
+                    fillcolor=fill,
+                    line=dict(color="rgba(180,220,180,0.5)",width=0.8),
+                    hovertemplate=hover+"<extra></extra>",
+                    showlegend=False, name=d["nombre"],
+                ))
+
+            # Etiquetas con %
+            cx_l, cy_l, txt_l, hov_l = [], [], [], []
+            for cod, d in reg_json.items():
+                val = esp_by_cod.get(cod, 0)
+                pct = val/total_nac*100 if total_nac>0 else 0
+                cx_l.append(d["cx"]); cy_l.append(d["cy"])
+                txt_l.append(f"{pct:.0f}%")
+                hov_l.append(f"<b>{d['nombre']}</b><br>{fmt_num(val,1)} Ha")
+            fig_esp.add_trace(go.Scattermapbox(
+                lon=cx_l, lat=cy_l,
+                mode="markers+text",
+                marker=dict(size=4,color="rgba(255,255,255,0.4)"),
+                text=txt_l,
+                textfont=dict(size=9,color="#F0F4FA"),
+                textposition="top right",
+                hovertemplate=[h+"<extra></extra>" for h in hov_l],
+                showlegend=False,
+            ))
+            fig_esp.update_layout(
+                mapbox=dict(style="carto-darkmatter",center=dict(lat=18.9,lon=-70.2),zoom=6.5),
+                paper_bgcolor="#0F1116",
+                margin=dict(l=0,r=0,t=0,b=0), height=320,
+            )
+            st.plotly_chart(fig_esp, use_container_width=True)
+
+            # Panel de porcentajes
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
             for _, row in ren_sub.sort_values("valor",ascending=False).iterrows():
                 pct = row["valor"]/total_nac*100 if total_nac>0 else 0
                 color = "#74C69D" if pct>=20 else "#4DA3FF" if pct>=10 else "#9EABC0"
                 st.markdown(f"""
-                <div style="margin-bottom:0.5rem;">
+                <div style="margin-bottom:0.4rem;">
                   <div style="display:flex;justify-content:space-between;">
-                    <span style="font-size:0.82rem;color:#C7D0DD;">{row['nombre']}</span>
-                    <span style="font-size:0.85rem;font-weight:600;color:{color};">{pct:.1f}%</span>
+                    <span style="font-size:0.8rem;color:#C7D0DD;">{row['nombre']}</span>
+                    <span style="font-size:0.82rem;font-weight:600;color:{color};">{pct:.1f}%</span>
                   </div>
-                  <div style="background:#1E2530;border-radius:4px;height:5px;margin-top:2px;">
-                    <div style="width:{pct:.1f}%;height:5px;border-radius:4px;background:{color};"></div>
+                  <div style="background:#1E2530;border-radius:3px;height:5px;margin-top:2px;">
+                    <div style="width:{pct:.1f}%;height:5px;border-radius:3px;background:{color};"></div>
                   </div>
-                  <div style="font-size:0.75rem;color:#6B7280;">
-                    {fmt_num(row['valor'])} {row.get('unidad','')}
-                  </div>
+                  <div style="font-size:0.72rem;color:#6B7280;">{fmt_num(row['valor'],1)} Ha</div>
                 </div>""", unsafe_allow_html=True)
-            unit_lbl = ren_sub["unidad"].iloc[0] if "unidad" in ren_sub.columns else ""
             st.markdown(f"""
-            <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #2B3240;
-                color:#6B7280;font-size:0.8rem;">
-              Total nacional: {fmt_num(total_nac)} {unit_lbl}
-              <br><span style="font-size:0.72rem;">% calculado sobre datos RENAGRO 2024</span>
+            <div style="margin-top:0.5rem;padding-top:0.4rem;border-top:1px solid #2B3240;
+                color:#6B7280;font-size:0.78rem;">
+              Total nacional: {fmt_num(total_nac,1)} Ha · % calculado sobre RENAGRO 2024
             </div>""", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         elif cultivo_sel == "Todos los cultivos RENAGRO":
-            tot_cult = ren_sub.groupby("cultivo")["valor"].sum().sort_values(ascending=False).head(10)
+            tot_cult = ren_sub.groupby("cultivo")["valor"].sum().sort_values(ascending=False).head(12)
             tot_all  = tot_cult.sum()
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
             for cult, val in tot_cult.items():
                 pct = val/tot_all*100 if tot_all>0 else 0
                 st.markdown(f"""
-                <div style="margin-bottom:0.42rem;">
+                <div style="margin-bottom:0.4rem;">
                   <div style="display:flex;justify-content:space-between;">
                     <span style="font-size:0.8rem;color:#C7D0DD;">{cult}</span>
                     <span style="font-size:0.8rem;color:#4DA3FF;">{pct:.1f}%</span>
@@ -673,186 +769,149 @@ with tab2:
                     <div style="width:{pct:.1f}%;height:4px;border-radius:3px;background:#4DA3FF;"></div>
                   </div>
                 </div>""", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-# ═════════════════════════════════════════════════════════════════
-# TAB 3 — SERIES HISTÓRICAS 2000–2024
-# ═════════════════════════════════════════════════════════════════
+    # ═══ SECCIÓN INFERIOR: SERIES HISTÓRICAS ══════════════════════
 
-with tab3:
+    st.markdown("---")
+    st.markdown(
+        f'<div class="panel-title">Series históricas 2000–2024 — {cultivo_sel} '
+        f'{ftag("Consolidado SC&P, Min. Agricultura RD")}</div>',
+        unsafe_allow_html=True)
 
-    st.markdown('<div class="filter-wrap">', unsafe_allow_html=True)
-    t3c1, t3c2, t3c3, t3c4 = st.columns([1.5, 1.5, 1.2, 1.2])
-    with t3c1:
-        cult_hist = st.selectbox("Cultivo", CULTIVOS_CONSOLIDADO, index=0, key="hist_cult")
-    with t3c2:
-        regs_hist = st.multiselect(
-            "Regiones", sorted(agg["region"].unique()),
-            default=[], placeholder="Todas", key="hist_regs",
-        )
-    with t3c3:
-        tipo_hist = st.selectbox("Tipo", ["siembra","cosecha"], index=0, key="hist_tipo")
-    with t3c4:
-        anio_range = st.slider("Período", 2000, 2024, (2000,2024), key="hist_anio")
-    st.markdown("</div>", unsafe_allow_html=True)
+    if cultivo_sel == "Todos los cultivos RENAGRO" or agg_hist.empty:
+        st.info("Selecciona un cultivo especifico para ver la serie historica.")
+    else:
+        anio_range = st.slider("Periodo", 2000, 2024, (2000,2024), key="hist_anio")
+        agg_h = agg_hist[(agg_hist["anio"]>=anio_range[0])&(agg_hist["anio"]<=anio_range[1])]
+        nac_h = nac_hist[(nac_hist["anio"]>=anio_range[0])&(nac_hist["anio"]<=anio_range[1])]
 
-    agg_hist = agg[
-        (agg["producto"]==cult_hist) &
-        (agg["anio"]>=anio_range[0]) &
-        (agg["anio"]<=anio_range[1])
-    ].copy()
-    if regs_hist:
-        agg_hist = agg_hist[agg_hist["region"].isin(regs_hist)]
+        hs_left, hs_right = st.columns([2.2, 0.8], gap="small")
 
-    nac_hist = nac[
-        (nac["producto"]==cult_hist) &
-        (nac["tipo"]==tipo_hist.upper()) &
-        (nac["anio"]>=anio_range[0]) &
-        (nac["anio"]<=anio_range[1])
-    ].copy()
+        with hs_left:
+            h_top, h_bot = st.columns(2, gap="small")
 
-    h_left, h_right = st.columns([2, 1], gap="small")
+            with h_top:
+                # Serie por region
+                regiones_datos = sorted(agg_h["region"].unique())
+                color_map_r = {r: COLORES_REG[i%len(COLORES_REG)] for i,r in enumerate(regiones_datos)}
+                fig_hist = go.Figure()
+                for reg in regiones_datos:
+                    sub = agg_h[agg_h["region"]==reg].sort_values("anio")
+                    vals = sub[tipo_hist] if tipo_hist in sub.columns else pd.Series(dtype=float)
+                    if vals.dropna().empty: continue
+                    fig_hist.add_trace(go.Scatter(
+                        x=sub["anio"], y=vals, mode="lines+markers", name=reg,
+                        line=dict(color=color_map_r[reg],width=2),
+                        marker=dict(size=4,color=color_map_r[reg]),
+                        hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.1f}} Ha<extra></extra>",
+                    ))
+                if not nac_h.empty:
+                    fig_hist.add_trace(go.Scatter(
+                        x=nac_h["anio"], y=nac_h["valor_nacional"],
+                        mode="lines", name="Total nacional",
+                        line=dict(color="#FFD166",width=2,dash="dash"),
+                        yaxis="y2",
+                        hovertemplate="Nacional: %{y:,.1f} Ha<extra></extra>",
+                    ))
+                fig_hist.update_layout(
+                    template="plotly_dark",paper_bgcolor="#171A21",plot_bgcolor="#171A21",
+                    margin=dict(l=10,r=10,t=10,b=10),height=320,
+                    xaxis=dict(showgrid=False,dtick=2),
+                    yaxis=dict(title="Ha (region)",gridcolor="#2B3240"),
+                    yaxis2=dict(title="Ha (nacional)",overlaying="y",side="right",
+                                showgrid=False,tickfont=dict(color="#FFD166")),
+                    legend=dict(orientation="h",y=1.1,x=0,font=dict(size=9)),
+                )
+                st.plotly_chart(fig_hist, use_container_width=True)
 
-    with h_left:
-        st.markdown(
-            f'<div class="panel-title">Evolución de {tipo_hist} — {cult_hist} '
-            f'{ftag("Consolidado SC&P, Min. Agricultura RD")}</div>',
-            unsafe_allow_html=True)
-        if not agg_hist.empty:
-            regiones_datos = sorted(agg_hist["region"].unique())
-            color_map_r = {r: COLORES_REG[i%len(COLORES_REG)] for i,r in enumerate(regiones_datos)}
-            fig_hist = go.Figure()
-            for reg in regiones_datos:
-                sub = agg_hist[agg_hist["region"]==reg].sort_values("anio")
-                vals = sub[tipo_hist] if tipo_hist in sub.columns else pd.Series(dtype=float)
-                if vals.dropna().empty: continue
-                fig_hist.add_trace(go.Scatter(
-                    x=sub["anio"], y=vals, mode="lines+markers", name=reg,
-                    line=dict(color=color_map_r[reg], width=2),
-                    marker=dict(size=5, color=color_map_r[reg]),
-                    hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.1f}} Ha<extra></extra>",
-                ))
-            if not nac_hist.empty:
-                fig_hist.add_trace(go.Scatter(
-                    x=nac_hist["anio"], y=nac_hist["valor_nacional"],
-                    mode="lines", name="Total nacional",
-                    line=dict(color="#FFD166",width=2,dash="dash"),
-                    yaxis="y2",
-                    hovertemplate="Nacional: %{y:,.1f} Ha<extra></extra>",
-                ))
-            fig_hist.update_layout(
-                template="plotly_dark", paper_bgcolor="#171A21", plot_bgcolor="#171A21",
-                margin=dict(l=10,r=10,t=10,b=10), height=380,
-                xaxis=dict(showgrid=False, dtick=2),
-                yaxis=dict(title="Hectáreas (región)", gridcolor="#2B3240"),
-                yaxis2=dict(title="Hectáreas (nacional)", overlaying="y", side="right",
-                            showgrid=False, tickfont=dict(color="#FFD166")),
-                legend=dict(orientation="h", y=1.1, x=0, font=dict(size=9)),
-            )
-            st.plotly_chart(fig_hist, use_container_width=True)
-        else:
-            st.info("Sin datos para la selección.")
+            with h_bot:
+                # Heatmap
+                if not agg_h.empty:
+                    heat_df = agg_h.pivot_table(index="region",columns="anio",values=tipo_hist,aggfunc="sum").fillna(0)
+                    fig_heat = go.Figure(go.Heatmap(
+                        z=heat_df.values,
+                        x=[str(c) for c in heat_df.columns],
+                        y=heat_df.index.tolist(),
+                        colorscale=[[0,"#0F1116"],[0.3,"#1A2535"],[0.6,"#2D5986"],[0.9,"#4DA3FF"],[1,"#74C69D"]],
+                        hovertemplate="Region: %{y}<br>Año: %{x}<br>%{z:,.1f} Ha<extra></extra>",
+                        colorbar=dict(tickfont=dict(color="#9EABC0",size=9),bgcolor="#12161D",bordercolor="#2B3240",thickness=10),
+                    ))
+                    fig_heat.update_layout(
+                        template="plotly_dark",paper_bgcolor="#171A21",plot_bgcolor="#171A21",
+                        margin=dict(l=10,r=10,t=5,b=10),height=310,
+                        xaxis=dict(showgrid=False,tickangle=-60,tickfont=dict(size=8)),
+                        yaxis=dict(showgrid=False,tickfont=dict(size=9)),
+                    )
+                    st.plotly_chart(fig_heat, use_container_width=True)
 
-        st.markdown(
-            f'<div class="panel-title" style="margin-top:0.4rem;">Heatmap anual — {cult_hist} '
-            f'{ftag("Consolidado SC&P, Min. Agricultura RD")}</div>',
-            unsafe_allow_html=True)
-        if not agg_hist.empty:
-            heat_df = agg_hist.pivot_table(
-                index="region", columns="anio", values=tipo_hist, aggfunc="sum"
-            ).fillna(0)
-            fig_heat = go.Figure(go.Heatmap(
-                z=heat_df.values,
-                x=[str(c) for c in heat_df.columns],
-                y=heat_df.index.tolist(),
-                colorscale=[[0,"#0F1116"],[0.2,"#1A2535"],[0.5,"#2D5986"],[0.8,"#4DA3FF"],[1,"#74C69D"]],
-                hovertemplate="Región: %{y}<br>Año: %{x}<br>%{z:,.1f} Ha<extra></extra>",
-                colorbar=dict(tickfont=dict(color="#9EABC0",size=9),
-                              bgcolor="#12161D",bordercolor="#2B3240"),
-            ))
-            fig_heat.update_layout(
-                template="plotly_dark", paper_bgcolor="#171A21", plot_bgcolor="#171A21",
-                margin=dict(l=10,r=10,t=5,b=10), height=230,
-                xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(size=9)),
-                yaxis=dict(showgrid=False, tickfont=dict(size=10)),
-            )
-            st.plotly_chart(fig_heat, use_container_width=True)
-
-        st.markdown("""
-        <div class="method-note">
-          <b>Fuente:</b> Consolidado Regional de Siembra, Cosecha y Producción 2000–2024.
-          Ministerio de Agricultura, Departamento de Economía Agropecuaria y Estadísticas.
-          Unidad original: <b>Tareas</b> (convertidas a Hectáreas en este visor, factor 0.062886). <b>Nota:</b> La región "Este" agrupa Yuma + Higuamo + Ozama
-          tal como aparece en la fuente original — no puede desagregarse con los datos disponibles.
-        </div>""", unsafe_allow_html=True)
-
-    with h_right:
-        st.markdown(
-            '<div class="panel-title">Variación acumulada '
-            '<span style="font-size:0.75rem;color:#6B7280;">(cálculo sobre datos fuente)</span>'
-            '</div>', unsafe_allow_html=True)
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        if not agg_hist.empty:
+        with hs_right:
+            st.markdown('<div class="panel-title">Variacion acumulada</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
             cambios = []
-            for reg in sorted(agg_hist["region"].unique()):
-                sub = agg_hist[agg_hist["region"]==reg].sort_values("anio")
+            for reg in sorted(agg_h["region"].unique()):
+                sub = agg_h[agg_h["region"]==reg].sort_values("anio")
                 v0s = sub[sub["anio"]==anio_range[0]][tipo_hist].dropna().values
                 v1s = sub[sub["anio"]==anio_range[1]][tipo_hist].dropna().values
                 if len(v0s) and len(v1s) and v0s[0]>0:
-                    cambios.append({
-                        "region":reg,
-                        "cambio":(v1s[0]-v0s[0])/v0s[0]*100,
-                        "v0":v0s[0],"v1":v1s[0],
-                    })
-            for row in sorted(cambios, key=lambda x: -x["cambio"]):
+                    cambios.append({"region":reg,"cambio":(v1s[0]-v0s[0])/v0s[0]*100,"v0":v0s[0],"v1":v1s[0]})
+            for row in sorted(cambios,key=lambda x:-x["cambio"]):
                 color = "#74C69D" if row["cambio"]>=0 else "#FF6B6B"
                 signo = "+" if row["cambio"]>=0 else ""
                 st.markdown(f"""
                 <div style="margin-bottom:0.5rem;">
                   <div style="display:flex;justify-content:space-between;">
-                    <span style="font-size:0.8rem;color:#C7D0DD;">{row['region']}</span>
-                    <span style="font-size:0.85rem;font-weight:600;color:{color};">
+                    <span style="font-size:0.78rem;color:#C7D0DD;">{row['region']}</span>
+                    <span style="font-size:0.82rem;font-weight:600;color:{color};">
                       {signo}{row['cambio']:.1f}%
                     </span>
                   </div>
-                  <div style="font-size:0.72rem;color:#6B7280;">
-                    {fmt_num(row['v0'],1)} → {fmt_num(row['v1'],1)} Ha
+                  <div style="font-size:0.7rem;color:#6B7280;">
+                    {fmt_num(row['v0'],1)} -> {fmt_num(row['v1'],1)} Ha
                   </div>
                 </div>""", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
-        if not nac_hist.empty:
-            v0n = nac_hist[nac_hist["anio"]==anio_range[0]]["valor_nacional"].values
-            v1n = nac_hist[nac_hist["anio"]==anio_range[1]]["valor_nacional"].values
-            if len(v0n) and len(v1n) and v0n[0]>0:
-                cn = (v1n[0]-v0n[0])/v0n[0]*100
-                color_n = "#74C69D" if cn>=0 else "#FF6B6B"
-                st.markdown(f"""
-                <div class="metric-card" style="margin-top:0.6rem;">
-                  <div class="metric-label">Cambio nacional {tipo_hist}</div>
-                  <div class="metric-value" style="font-size:1.6rem;color:{color_n};">
-                    {'+' if cn>=0 else ''}{cn:.1f}%
-                  </div>
-                  <div class="metric-small">{anio_range[0]} → {anio_range[1]}</div>
-                </div>""", unsafe_allow_html=True)
+            if not nac_h.empty:
+                v0n = nac_h[nac_h["anio"]==anio_range[0]]["valor_nacional"].values
+                v1n = nac_h[nac_h["anio"]==anio_range[1]]["valor_nacional"].values
+                if len(v0n) and len(v1n) and v0n[0]>0:
+                    cn = (v1n[0]-v0n[0])/v0n[0]*100
+                    cn_color = "#74C69D" if cn>=0 else "#FF6B6B"
+                    st.markdown(f"""
+                    <div style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid #2B3240;
+                        text-align:center;">
+                      <div style="font-size:0.78rem;color:#9EABC0;">Nacional {anio_range[0]}–{anio_range[1]}</div>
+                      <div style="font-size:1.4rem;font-weight:700;color:{cn_color};">
+                        {'+' if cn>=0 else ''}{cn:.1f}%
+                      </div>
+                    </div>""", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="method-note">
+          <b>Fuente:</b> Consolidado Regional de Siembra, Cosecha y Produccion 2000–2024,
+          Ministerio de Agricultura RD. Valores originales en Tareas convertidos a Hectareas
+          (1 tarea = 0.062886 Ha). La region "Este" agrupa Yuma + Higuamo + Ozama
+          segun la fuente original y no puede desagregarse.
+        </div>""", unsafe_allow_html=True)
 
 # ═════════════════════════════════════════════════════════════════
-# TAB 4 — PERFIL POR REGIÓN
+# TAB 3 — PERFIL POR REGIÓN
 # ═════════════════════════════════════════════════════════════════
 
-with tab4:
+with tab3:
 
     p4c1, p4c2 = st.columns([1, 3], gap="medium")
 
     with p4c1:
-        st.markdown('<div class="panel-title">Selecciona una región</div>',
+        st.markdown('<div class="panel-title">Selecciona una region</div>',
                     unsafe_allow_html=True)
         prod_by_reg = ren[ren["variable"]=="Productores"][["cod_region","valor"]].sort_values(
-            "valor", ascending=False)
+            "valor",ascending=False)
         opciones_reg = prod_by_reg["cod_region"].tolist()
 
         region_sel = st.radio(
-            "Región", options=opciones_reg,
+            "Region", options=opciones_reg,
             format_func=lambda c: NOMBRES_REG.get(c, c),
             label_visibility="collapsed", key="perfil_reg",
         )
@@ -882,43 +941,42 @@ with tab4:
         reg_nombre = NOMBRES_REG.get(region_sel, region_sel)
         reg_ind    = ind[ind["cod_region"]==region_sel]
 
-        st.markdown(f'<div class="panel-title" style="font-size:1.2rem;">📍 {reg_nombre}</div>',
+        st.markdown(f'<div class="panel-title" style="font-size:1.2rem;">Perfil: {reg_nombre}</div>',
                     unsafe_allow_html=True)
 
         prod_v  = get_val(region_sel,"Productores totales")
         sup_v   = get_val(region_sel,"Superficie agropecuaria total")
-        at_v    = get_val(region_sel,"% parcelas con asistencia técnica")
-        cred_v  = get_val(region_sel,"% productores con crédito")
-        org_v   = get_val(region_sel,"% productores en organización rural")
+        at_v    = get_val(region_sel,"% parcelas con asistencia tecnica")
+        cred_v  = get_val(region_sel,"% productores con credito")
+        org_v   = get_val(region_sel,"% productores en organizacion rural")
         inseg_v = get_val(region_sel,"% productores con inseguridad alimentaria")
-        leche_v = get_val(region_sel,"Leche - Producción litros/día")
+        leche_v = get_val(region_sel,"Leche - Produccion litros/dia")
         muj_v   = get_val(region_sel,"% mujeres en fuerza laboral")
 
         m1,m2,m3,m4 = st.columns(4)
-        for col,label,val,unit,nota in [
-            (m1,"Productores",    prod_v,  "",    "RENAGRO 2024"),
-            (m2,"Sup. Agropec.",  sup_v,   "Ta.", "RENAGRO 2024"),
-            (m3,"Asist. Técnica", at_v,    "%",   "Parcelas"),
-            (m4,"Acceso crédito", cred_v,  "%",   "Productores"),
+        for col,label,val,unit in [
+            (m1,"Productores",    prod_v,  ""),
+            (m2,"Sup. Agropec.",  sup_v,   "Ha"),
+            (m3,"Asist. Tecnica", at_v,    "%"),
+            (m4,"Acceso credito", cred_v,  "%"),
         ]:
             col.markdown(f"""
             <div class="metric-card">
               <div class="metric-label">{label}</div>
               <div class="metric-value" style="font-size:1.35rem;">{fmt_num(val,1)}</div>
-              <div class="metric-small">{unit} · {nota}</div>
+              <div class="metric-small">{unit} · RENAGRO 2024</div>
             </div>""", unsafe_allow_html=True)
 
         r_left, r_right = st.columns([1.1, 1.9], gap="small")
 
         with r_left:
-            st.markdown(
-                f'<div class="panel-title">Indicadores sociales {ftag("RENAGRO 2024")}</div>',
-                unsafe_allow_html=True)
+            st.markdown(f'<div class="panel-title">Indicadores sociales {ftag("RENAGRO 2024")}</div>',
+                        unsafe_allow_html=True)
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             for label, val, color, desc in [
-                ("Asistencia técnica", at_v,    "#74C69D", "% parcelas"),
-                ("Acceso a crédito",   cred_v,  "#F5A020", "% productores"),
-                ("Organización rural", org_v,   "#4DA3FF", "% productores"),
+                ("Asistencia tecnica", at_v,    "#74C69D", "% parcelas"),
+                ("Acceso a credito",   cred_v,  "#F5A020", "% productores"),
+                ("Organizacion rural", org_v,   "#4DA3FF", "% productores"),
                 ("Inseg. alimentaria", inseg_v, "#FF6B6B", "% productores"),
                 ("Mujeres en trabajo", muj_v,   "#C77DFF", "% fuerza laboral"),
             ]:
@@ -937,22 +995,21 @@ with tab4:
             if not np.isnan(leche_v):
                 st.markdown(f"""
                 <div class="metric-card" style="margin-top:0.5rem;">
-                  <div class="metric-label">Producción de leche</div>
+                  <div class="metric-label">Produccion de leche</div>
                   <div class="metric-value" style="font-size:1.1rem;">{fmt_num(leche_v)}</div>
-                  <div class="metric-small">Litros/día · RENAGRO 2024</div>
+                  <div class="metric-small">Litros/dia · RENAGRO 2024</div>
                 </div>""", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         with r_right:
-            st.markdown(
-                f'<div class="panel-title">Cultivos — área sembrada {ftag("RENAGRO 2024")}</div>',
-                unsafe_allow_html=True)
+            st.markdown(f'<div class="panel-title">Cultivos — area sembrada {ftag("RENAGRO 2024")}</div>',
+                        unsafe_allow_html=True)
             cultivos_reg = ren[
                 (ren["cod_region"]==region_sel) &
-                (ren["variable"].str.endswith("- Área sembrada"))
+                (ren["variable"].str.endswith("- Area sembrada"))
             ].copy()
             cultivos_reg["cultivo"] = cultivos_reg["variable"].str.replace(
-                " - Área sembrada","",regex=False)
+                " - Area sembrada","",regex=False)
             cultivos_reg = cultivos_reg[cultivos_reg["valor"]>0].sort_values(
                 "valor",ascending=False)
 
@@ -963,12 +1020,10 @@ with tab4:
                     labels=cultivos_reg["cultivo"],
                     values=cultivos_reg["valor"],
                     hole=0.45,
-                    marker=dict(
-                        colors=COLORES_CULT[:len(cultivos_reg)],
-                        line=dict(color="#0F1116",width=2),
-                    ),
+                    marker=dict(colors=COLORES_CULT[:len(cultivos_reg)],
+                                line=dict(color="#0F1116",width=2)),
                     textfont=dict(size=10,color="#E8EDF5"),
-                    hovertemplate="<b>%{label}</b><br>%{value:,.0f} Ta.<br>%{percent}<extra></extra>",
+                    hovertemplate="<b>%{label}</b><br>%{value:,.1f} Ha<br>%{percent}<extra></extra>",
                 ))
                 fig_pie.update_layout(
                     paper_bgcolor="#171A21",
@@ -978,14 +1033,14 @@ with tab4:
                 st.plotly_chart(fig_pie, use_container_width=True)
 
             # Tabla limpia solo con datos directos de fuente
-            st.markdown(
-                f'<div class="panel-title" style="margin-top:0.4rem;">Datos por pilar {ftag("RENAGRO 2024")}</div>',
-                unsafe_allow_html=True)
+            st.markdown(f'<div class="panel-title" style="margin-top:0.4rem;">Datos por pilar {ftag("RENAGRO 2024")}</div>',
+                        unsafe_allow_html=True)
             tabla_reg = reg_ind[
-                (reg_ind["pilar"] != "0. Índice Compuesto") &
+                (reg_ind["pilar"] != "0. Indice Compuesto") &
                 (~reg_ind["indicador"].isin(EXCLUIR_CALCULADOS))
             ][["pilar","indicador","valor","unidad"]].copy()
             tabla_reg["pilar"] = tabla_reg["pilar"].map(PILAR_LABELS).fillna(tabla_reg["pilar"])
+            tabla_reg["unidad"] = tabla_reg["unidad"].apply(unit_label)
             tabla_reg["valor"] = tabla_reg["valor"].map(
                 lambda x: f"{x:,.2f}" if pd.notna(x) else "—")
             tabla_reg.columns = ["Pilar","Indicador","Valor","Unidad"]
@@ -999,14 +1054,13 @@ st.markdown("""
 <div style="margin-top:1.2rem;padding-top:0.6rem;border-top:1px solid #2B3240;
     color:#4A5568;font-size:0.8rem;text-align:center;">
   Fuente: RENAGRO 2024 · Consolidado Regional SC&amp;P 2000–2024
-  · Ministerio de Agricultura de la República Dominicana
-  · Cartografía ONE/IGN · Vías OSM/Geofabrik
+  · Ministerio de Agricultura de la Republica Dominicana
+  · Cartografia ONE/IGN · Vias OSM/Geofabrik
   | FAO UTF-COL-178 / SARA · Visor Territorial Agroalimentario RD
-  <br><span style="color:#3A4558;">
-  📐 Las superficies se presentan en <b>hectáreas</b> (Ha).
-  Los datos originales del RENAGRO y el Consolidado SC&amp;P están en <b>tareas</b>
-  (unidad oficial dominicana). Factor de conversión aplicado: 1 tarea = 0.062886 Ha
-  (equivale a 628.86 m²). 1 hectárea = ~15.9 tareas.
+  <br><span style="color:#3A4558;font-size:0.76rem;">
+  Las superficies se presentan en <b>hectareas (Ha)</b>.
+  Datos originales del RENAGRO y Consolidado SC&amp;P en <b>tareas</b>
+  (unidad oficial dominicana). Factor de conversion: 1 tarea = 0.062886 Ha = 628.86 m². 1 Ha = ~15.9 tareas.
   </span>
 </div>
 """, unsafe_allow_html=True)
