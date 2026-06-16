@@ -135,6 +135,7 @@ PILAR_LABELS = {
     "3. Servicios de Apoyo":            "Servicios de Apoyo",
     "4. Financiamiento":                "Financiamiento",
     "5. Organización y Vulnerabilidad": "Organización y Vulnerabilidad",
+    "6. Precenso RENAGRO 2024":         "Perfil productor (Precenso)",
 }
 IND_DIRECTOS = {
     "1. Capacidad Productiva": [
@@ -173,6 +174,24 @@ IND_DIRECTOS = {
         "% productores en organización rural",
         "Productores con falta de alimento",
         "% productores con inseguridad alimentaria",
+    ],
+    "6. Precenso RENAGRO 2024": [
+        "% titulares mujeres",
+        "% agricultores familiares (criterio FAO)",
+        "% agricultores familiares (criterio RD)",
+        "% pequeños productores",
+        "% medianos productores",
+        "% productores propietarios",
+        "% productores arrendatarios",
+        "% actividad principal Agricultura",
+        "% actividad principal Ganadería",
+        "% actividad principal Agropecuario mixto",
+        "Mediana tamaño UA (ha)",
+        "% UA menores de 1 ha",
+        "% UA de 1 a 10 ha",
+        "% UA mayores de 10 ha",
+        "Total unidades agropecuarias en precenso",
+        "Municipios cubiertos en precenso",
     ],
 }
 EXCLUIR_CALCULADOS = {
@@ -1055,6 +1074,60 @@ with tab3:
                 )
                 st.plotly_chart(fig_pie, use_container_width=True)
 
+            # Indicadores del precenso por región
+            pre_reg = ren[
+                (ren["cod_region"]==region_sel) &
+                (ren["pilar"]=="6. Precenso RENAGRO 2024")
+            ].copy()
+            if not pre_reg.empty:
+                st.markdown(
+                    f'<div class="panel-title" style="margin-top:0.5rem;">Perfil del productor {ftag("Precenso RENAGRO 2024")}</div>',
+                    unsafe_allow_html=True)
+                # Agrupar por tema
+                temas_pre = pre_reg["tema"].unique()
+                TEMA_COLOR = {
+                    "Género":               "#C77DFF",
+                    "Agricultura familiar": "#74C69D",
+                    "Tamaño de productor":  "#4DA3FF",
+                    "Régimen de tenencia":  "#FFD166",
+                    "Actividad principal":  "#F5A020",
+                    "Tamaño UA":            "#FF6B6B",
+                }
+                for tema in ["Género","Agricultura familiar","Tamaño de productor",
+                             "Actividad principal","Régimen de tenencia","Tamaño UA"]:
+                    sub_t = pre_reg[pre_reg["tema"]==tema]
+                    if sub_t.empty: continue
+                    color_t = TEMA_COLOR.get(tema, "#9EABC0")
+                    st.markdown(f"""
+                    <div style="font-size:0.78rem;font-weight:600;color:{color_t};
+                        margin:0.4rem 0 0.2rem 0;text-transform:uppercase;
+                        letter-spacing:0.05em;">{tema}</div>""",
+                    unsafe_allow_html=True)
+                    pct_vars = sub_t[sub_t["unidad"]=="%"].sort_values("variable")
+                    num_vars = sub_t[sub_t["unidad"]!= "%"].sort_values("variable")
+                    # Barras para %
+                    for _, vr in pct_vars.iterrows():
+                        w = max(0, min(100, vr["valor"] or 0))
+                        st.markdown(f"""
+                        <div style="margin-bottom:0.35rem;">
+                          <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
+                            <span style="color:#C7D0DD;">{vr['variable'].replace('% ','')}</span>
+                            <span style="color:{color_t};font-weight:600;">{vr['valor']:.1f}%</span>
+                          </div>
+                          <div style="background:#1E2530;border-radius:3px;height:5px;margin-top:2px;">
+                            <div style="width:{w:.1f}%;height:5px;border-radius:3px;background:{color_t};"></div>
+                          </div>
+                        </div>""", unsafe_allow_html=True)
+                    # Métricas numéricas
+                    for _, vr in num_vars.iterrows():
+                        unidad = vr["unidad"] if vr["unidad"] != "Número" else ""
+                        st.markdown(f"""
+                        <div style="display:flex;justify-content:space-between;
+                            font-size:0.8rem;margin-bottom:0.25rem;">
+                          <span style="color:#9EABC0;">{vr['variable']}</span>
+                          <span style="color:#F0F4FA;font-weight:600;">{vr['valor']:,.0f} {unidad}</span>
+                        </div>""", unsafe_allow_html=True)
+
             # Uso del suelo de la región
             uso_reg = ren[
                 (ren["cod_region"]==region_sel) &
@@ -1106,6 +1179,7 @@ st.markdown("""
   Fuente: RENAGRO 2024 · Consolidado Regional SC&amp;P 2000–2024
   · Ministerio de Agricultura de la Republica Dominicana
   · Cartografia ONE/IGN · Vias OSM/Geofabrik
+  · Precenso RENAGRO 2024 (microdatos)
   | FAO UTF-COL-178 / SARA · Visor Territorial Agroalimentario RD
   <br><span style="color:#3A4558;font-size:0.76rem;">
   Las superficies se presentan en <b>hectareas (Ha)</b>.
