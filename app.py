@@ -113,9 +113,10 @@ st.markdown("""
 # CONSTANTES
 # ─────────────────────────────────────────────────────────────────
 
-CULTIVOS_RENAGRO = [
-    "Arroz","Platano","Cacao","Cafe","Yuca dulce",
-    "Maiz","Cana de azucar","Yuca amarga",
+# Cultivos con datos en RENAGRO 2024 por región (nombres exactos del parquet)
+CULTIVOS_RENAGRO_VARS = [
+    "Arroz","Plátano","Cacao","Café","Yuca dulce",
+    "Maíz","Caña de azúcar","Yuca amarga",
 ]
 # Productos con datos reales en el consolidado (>= 5 anos de siembra)
 CULTIVOS_CONSOLIDADO = sorted([
@@ -555,24 +556,26 @@ with tab1:
 
 with tab2:
 
-    # ── Filtros comunes ────────────────────────────────────────
+    # ── Filtros superiores ────────────────────────────────────────
     st.markdown('<div class="filter-wrap">', unsafe_allow_html=True)
-    p2c1, p2c2, p2c3 = st.columns([1.5, 1.5, 1])
+    p2c1, p2c2 = st.columns([2, 2])
     with p2c1:
+        # Unir cultivos del consolidado + cultivos solo en RENAGRO (sin duplicar)
+        opciones_cult = PRODS_VALIDOS + [
+            c for c in CULTIVOS_RENAGRO_VARS if c not in PRODS_VALIDOS
+        ] + ["Todos los cultivos RENAGRO"]
         cultivo_sel = st.selectbox(
             "Cultivo",
-            PRODS_VALIDOS + ["Todos los cultivos RENAGRO"],
-            index=PRODS_VALIDOS.index("Arroz") if "Arroz" in PRODS_VALIDOS else 0,
+            opciones_cult,
+            index=opciones_cult.index("Arroz") if "Arroz" in opciones_cult else 0,
             key="prod_cult",
         )
     with p2c2:
         metrica_sel = st.selectbox(
-            "Métrica (RENAGRO)",
+            "Métrica",
             ["Área sembrada","Área cosechada","Productores","Parcelas"],
             key="prod_met",
         )
-    with p2c3:
-        tipo_hist = st.selectbox("Tipo (historico)", ["siembra","cosecha"], index=0, key="hist_tipo")
     st.markdown("</div>", unsafe_allow_html=True)
 
     UNIDAD_MET = {
@@ -584,38 +587,21 @@ with tab2:
     ren_named = ren.copy()
     ren_named["nombre"] = ren_named["cod_region"].map(NOMBRES_REG)
 
-    # Mapear nombre de cultivo seleccionado a variable RENAGRO
-    CULT_VAR_MAP = {
-        "Arroz":          "Arroz",
-        "Plátano":        "Plátano",
-        "Platano":        "Plátano",
-        "Cacao":          "Cacao",
-        "Café":           "Café",
-        "Cafe":           "Café",
-        "Yuca dulce":     "Yuca dulce",
-        "Maíz":           "Maíz",
-        "Maiz":           "Maíz",
-        "Caña de azúcar": "Caña de azúcar",
-        "Cana de azucar": "Caña de azúcar",
-        "Yuca amarga":    "Yuca amarga",
-    }
-    cult_ren = CULT_VAR_MAP.get(cultivo_sel, cultivo_sel)
+    # Determinar si este cultivo tiene datos en RENAGRO 2024
+    cult_ren = cultivo_sel  # nombre tal como aparece en el parquet
+    tiene_renagro = cultivo_sel in CULTIVOS_RENAGRO_VARS
 
     if cultivo_sel == "Todos los cultivos RENAGRO":
         sufijo = f"- {metrica_sel}"
         ren_sub = ren_named[ren_named["variable"].str.endswith(sufijo)].copy()
         ren_sub["cultivo"] = ren_sub["variable"].str.replace(f" - {metrica_sel}","",regex=False)
-        # Excluir variables de uso del suelo
         ren_sub = ren_sub[~ren_sub["pilar"].str.contains("Uso del suelo", na=False)]
-    else:
-        var_q   = f"{cult_ren} - {metrica_sel}"
+    elif tiene_renagro:
+        var_q  = f"{cult_ren} - {metrica_sel}"
         ren_sub = ren_named[ren_named["variable"]==var_q].copy()
         ren_sub["cultivo"] = cultivo_sel
-        if ren_sub.empty:
-            # Intentar sin tildes (fallback)
-            var_q2 = var_q.replace("Á","A").replace("é","e").replace("í","i")
-            ren_sub = ren_named[ren_named["variable"]==var_q2].copy()
-            ren_sub["cultivo"] = cultivo_sel
+    else:
+        ren_sub = pd.DataFrame()  # cultivo no está en RENAGRO 2024
 
     # ── Datos consolidado historico ────────────────────────────
     agg_hist = agg[agg["producto"]==cultivo_sel].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
@@ -733,9 +719,17 @@ with tab2:
             for cod, d in reg_json.items():
                 val  = esp_by_cod.get(cod, 0)
                 norm = val / vmax_e if vmax_e > 0 else 0
-                r = int(13  + (45  - 13)  * norm)
-                g = int(40  + (180 - 40)  * norm)
-                b = int(24  + (80  - 24)  * norm)
+                # Escala verde→rojo igual que el mapa principal
+                if norm >= 0.5:
+                    t = (norm - 0.5) * 2
+                    r = int(255 * (1 - t))
+                    g = int(180 + (75 * t))
+                    b = int(20 * (1 - t))
+                else:
+                    t = norm * 2
+                    r = int(220 - (20 * t))
+                    g = int(50 + (130 * t))
+                    b = 15
                 fill = f"rgba({r},{g},{b},0.82)"
                 pct  = val/total_nac*100 if total_nac>0 else 0
                 hover = f"<b>{d['nombre']}</b><br>{fmt_num(val,1)} Ha<br>{pct:.1f}% del total nacional"
@@ -983,8 +977,58 @@ with tab3:
         reg_nombre = NOMBRES_REG.get(region_sel, region_sel)
         reg_ind    = ind[ind["cod_region"]==region_sel]
 
-        st.markdown(f'<div class="panel-title" style="font-size:1.2rem;">Perfil: {reg_nombre}</div>',
-                    unsafe_allow_html=True)
+        # ── Mini-mapa con región resaltada ───────────────────────────────
+        import json as _json
+        with open(RUTA_REG_JSON) as _f:
+            _rj = _json.load(_f)
+
+        @st.cache_data(show_spinner=False)
+        def build_mapa_region(region_cod):
+            fig_r = go.Figure()
+            for cod, d in _rj.items():
+                es_sel = (cod == region_cod)
+                # Color: verde brillante si seleccionada, gris oscuro si no
+                if es_sel:
+                    fill = "rgba(116,198,157,0.85)"
+                    line_c = "rgba(255,255,255,0.9)"
+                    lw = 2.0
+                else:
+                    fill = "rgba(30,37,48,0.7)"
+                    line_c = "rgba(80,100,120,0.5)"
+                    lw = 0.7
+                fig_r.add_trace(go.Scattermapbox(
+                    lon=d["lons"], lat=d["lats"],
+                    mode="lines", fill="toself",
+                    fillcolor=fill,
+                    line=dict(color=line_c, width=lw),
+                    hovertemplate=f"<b>{d['nombre']}</b><extra></extra>",
+                    showlegend=False,
+                ))
+            # Centrar en la región seleccionada
+            cx = _rj[region_cod]["cx"]
+            cy = _rj[region_cod]["cy"]
+            fig_r.update_layout(
+                mapbox=dict(style="carto-darkmatter",
+                            center=dict(lat=cy, lon=cx), zoom=6.5),
+                paper_bgcolor="#0F1116",
+                margin=dict(l=0, r=0, t=0, b=0), height=200,
+            )
+            return fig_r
+
+        map_col, title_col = st.columns([1, 2])
+        with map_col:
+            st.plotly_chart(build_mapa_region(region_sel),
+                            use_container_width=True, config={"displayModeBar": False})
+        with title_col:
+            st.markdown(
+                f'<div style="font-size:1.3rem;font-weight:700;color:#F0F4FA;'
+                f'padding-top:0.6rem;">{reg_nombre}</div>',
+                unsafe_allow_html=True)
+            st.markdown(
+                '<div style="font-size:0.82rem;color:#6B7280;margin-top:0.2rem;">'
+                'Región de planificación · RENAGRO 2024 + Precenso'
+                '</div>',
+                unsafe_allow_html=True)
 
         prod_v  = get_val(region_sel,"Productores totales")
         sup_v   = get_val(region_sel,"Superficie agropecuaria total")
@@ -1163,7 +1207,11 @@ with tab3:
                 (~reg_ind["indicador"].isin(EXCLUIR_CALCULADOS))
             ][["pilar","indicador","valor","unidad"]].copy()
             tabla_reg["pilar"] = tabla_reg["pilar"].map(PILAR_LABELS).fillna(tabla_reg["pilar"])
-            tabla_reg["unidad"] = tabla_reg["unidad"].apply(unit_label)
+            def fix_unit(u):
+                if u in ("Tareas","Tareas/productor","Tareas/día"):
+                    return "Ha" if "productor" not in str(u) else "Ha/prod."
+                return unit_label(u)
+            tabla_reg["unidad"] = tabla_reg["unidad"].apply(fix_unit)
             tabla_reg["valor"] = tabla_reg["valor"].map(
                 lambda x: f"{x:,.2f}" if pd.notna(x) else "—")
             tabla_reg.columns = ["Pilar","Indicador","Valor","Unidad"]
