@@ -262,13 +262,28 @@ def productos_con_datos(agg):
 PRODS_VALIDOS = productos_con_datos(agg)
 
 @st.cache_data(show_spinner=False)
-def build_pivot(ind):
-    return ind[~ind["indicador"].isin(EXCLUIR_CALCULADOS)].pivot_table(
-        index=["cod_region","region"], columns="indicador",
+def build_pivot(ind, ren):
+    """Pivot unificado desde ind (pilares 1,3,4,5) + ren (pilares 2,6)."""
+    # Desde indicadores_regionales (pilares 1,3,4,5)
+    ind_clean = ind[~ind["indicador"].isin(EXCLUIR_CALCULADOS)].copy()
+    ind_clean = ind_clean.rename(columns={"indicador":"variable"})
+
+    # Desde renagro_master (pilares 2 y 6 que no están en ind)
+    ren_extra = ren[ren["pilar"].isin(["2. Uso del suelo","6. Precenso RENAGRO 2024"])].copy()
+
+    # Unir
+    cols_comun = ["cod_region","region","variable","valor"]
+    combined = pd.concat([
+        ind_clean[cols_comun],
+        ren_extra[cols_comun],
+    ], ignore_index=True)
+
+    return combined.pivot_table(
+        index=["cod_region","region"], columns="variable",
         values="valor", aggfunc="first"
     ).reset_index()
 
-pivot         = build_pivot(ind)
+pivot         = build_pivot(ind, ren)
 NOMBRES_REG   = {cod: d["nombre"] for cod, d in reg_json.items()}
 
 # ─────────────────────────────────────────────────────────────────
@@ -605,7 +620,6 @@ with tab2:
 
     # ── Datos consolidado historico ────────────────────────────
     agg_hist = agg[agg["producto"]==cultivo_sel].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
-    nac_hist = nac[(nac["producto"]==cultivo_sel)&(nac["tipo"]==tipo_hist.upper())].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
 
     # ═══ SECCIÓN SUPERIOR: RENAGRO ═══════════════════════════════
     st.markdown('<div class="panel-title">Distribucion regional — RENAGRO 2024</div>',
@@ -807,7 +821,9 @@ with tab2:
                 </div>""", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ═══ SECCIÓN INFERIOR: SERIES HISTÓRICAS ══════════════════════
+    # ═══     # ═══════════════════════════════════════════════════════════════
+    # SECCIÓN INFERIOR: SERIES HISTÓRICAS 2000–2024
+    # ═══════════════════════════════════════════════════════════════
 
     st.markdown("---")
     st.markdown(
@@ -815,85 +831,109 @@ with tab2:
         f'{ftag("Consolidado SC&P, Min. Agricultura RD")}</div>',
         unsafe_allow_html=True)
 
-    if cultivo_sel == "Todos los cultivos RENAGRO" or agg_hist.empty:
-        st.info("Selecciona un cultivo especifico para ver la serie historica.")
+    if cultivo_sel == "Todos los cultivos RENAGRO":
+        st.info("Selecciona un cultivo específico para ver la serie histórica.")
+    elif agg_hist.empty:
+        st.markdown(f"""
+        <div class="method-note">
+          <b>{cultivo_sel}</b> no está disponible en el Consolidado Histórico SC&amp;P 2000–2024.
+          Este cultivo solo tiene datos en el RENAGRO 2024 (sección superior).
+        </div>""", unsafe_allow_html=True)
     else:
-        anio_range = st.slider("Periodo", 2000, 2024, (2000,2024), key="hist_anio")
-        agg_h = agg_hist[(agg_hist["anio"]>=anio_range[0])&(agg_hist["anio"]<=anio_range[1])]
-        nac_h = nac_hist[(nac_hist["anio"]>=anio_range[0])&(nac_hist["anio"]<=anio_range[1])]
+        # ── Filtros propios de la sección histórica ───────────────────────────
+        st.markdown('<div class="filter-wrap">', unsafe_allow_html=True)
+        hf1, hf2 = st.columns([3, 1])
+        with hf1:
+            anio_range = st.slider("Período", 2000, 2024, (2000, 2024), key="hist_anio")
+        with hf2:
+            tipo_hist = st.selectbox(
+                "Tipo de dato",
+                ["siembra", "cosecha"],
+                index=0, key="hist_tipo",
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        hs_left, hs_right = st.columns([2.2, 0.8], gap="small")
+        # Filtrar datos al período seleccionado
+        agg_h = agg_hist[
+            (agg_hist["anio"] >= anio_range[0]) &
+            (agg_hist["anio"] <= anio_range[1])
+        ].copy()
+        nac_h = nac[
+            (nac["producto"] == cultivo_sel) &
+            (nac["tipo"] == tipo_hist.upper()) &
+            (nac["anio"] >= anio_range[0]) &
+            (nac["anio"] <= anio_range[1])
+        ].copy()
+
+        hs_left, hs_right = st.columns([2.5, 0.8], gap="small")
 
         with hs_left:
-            h_top, h_bot = st.columns(2, gap="small")
+            # Serie por región — gráfico ampliado sin heatmap
+            regiones_datos = sorted(agg_h["region"].unique())
+            color_map_r = {r: COLORES_REG[i % len(COLORES_REG)]
+                           for i, r in enumerate(regiones_datos)}
+            fig_hist = go.Figure()
+            for reg in regiones_datos:
+                sub  = agg_h[agg_h["region"] == reg].sort_values("anio")
+                vals = sub[tipo_hist] if tipo_hist in sub.columns else pd.Series(dtype=float)
+                if vals.dropna().empty:
+                    continue
+                fig_hist.add_trace(go.Scatter(
+                    x=sub["anio"], y=vals,
+                    mode="lines+markers", name=reg,
+                    line=dict(color=color_map_r[reg], width=2),
+                    marker=dict(size=5, color=color_map_r[reg]),
+                    hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.1f}} Ha<extra></extra>",
+                ))
+            if not nac_h.empty:
+                fig_hist.add_trace(go.Scatter(
+                    x=nac_h["anio"], y=nac_h["valor_nacional"],
+                    mode="lines", name="Total nacional",
+                    line=dict(color="#FFD166", width=2.5, dash="dash"),
+                    yaxis="y2",
+                    hovertemplate="Nacional: %{y:,.1f} Ha<extra></extra>",
+                ))
+            fig_hist.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#171A21", plot_bgcolor="#171A21",
+                margin=dict(l=10, r=10, t=10, b=10), height=420,
+                xaxis=dict(showgrid=False, dtick=2, tickfont=dict(size=10)),
+                yaxis=dict(title="Ha (región)", gridcolor="#2B3240"),
+                yaxis2=dict(
+                    title="Ha (nacional)", overlaying="y", side="right",
+                    showgrid=False, tickfont=dict(color="#FFD166"),
+                ),
+                legend=dict(orientation="h", y=1.08, x=0, font=dict(size=9)),
+            )
+            st.plotly_chart(fig_hist, use_container_width=True)
 
-            with h_top:
-                # Serie por region
-                regiones_datos = sorted(agg_h["region"].unique())
-                color_map_r = {r: COLORES_REG[i%len(COLORES_REG)] for i,r in enumerate(regiones_datos)}
-                fig_hist = go.Figure()
-                for reg in regiones_datos:
-                    sub = agg_h[agg_h["region"]==reg].sort_values("anio")
-                    vals = sub[tipo_hist] if tipo_hist in sub.columns else pd.Series(dtype=float)
-                    if vals.dropna().empty: continue
-                    fig_hist.add_trace(go.Scatter(
-                        x=sub["anio"], y=vals, mode="lines+markers", name=reg,
-                        line=dict(color=color_map_r[reg],width=2),
-                        marker=dict(size=4,color=color_map_r[reg]),
-                        hovertemplate=f"<b>{reg}</b><br>%{{x}}: %{{y:,.1f}} Ha<extra></extra>",
-                    ))
-                if not nac_h.empty:
-                    fig_hist.add_trace(go.Scatter(
-                        x=nac_h["anio"], y=nac_h["valor_nacional"],
-                        mode="lines", name="Total nacional",
-                        line=dict(color="#FFD166",width=2,dash="dash"),
-                        yaxis="y2",
-                        hovertemplate="Nacional: %{y:,.1f} Ha<extra></extra>",
-                    ))
-                fig_hist.update_layout(
-                    template="plotly_dark",paper_bgcolor="#171A21",plot_bgcolor="#171A21",
-                    margin=dict(l=10,r=10,t=10,b=10),height=320,
-                    xaxis=dict(showgrid=False,dtick=2),
-                    yaxis=dict(title="Ha (region)",gridcolor="#2B3240"),
-                    yaxis2=dict(title="Ha (nacional)",overlaying="y",side="right",
-                                showgrid=False,tickfont=dict(color="#FFD166")),
-                    legend=dict(orientation="h",y=1.1,x=0,font=dict(size=9)),
-                )
-                st.plotly_chart(fig_hist, use_container_width=True)
-
-            with h_bot:
-                # Heatmap
-                if not agg_h.empty:
-                    heat_df = agg_h.pivot_table(index="region",columns="anio",values=tipo_hist,aggfunc="sum").fillna(0)
-                    fig_heat = go.Figure(go.Heatmap(
-                        z=heat_df.values,
-                        x=[str(c) for c in heat_df.columns],
-                        y=heat_df.index.tolist(),
-                        colorscale=[[0,"#0F1116"],[0.3,"#1A2535"],[0.6,"#2D5986"],[0.9,"#4DA3FF"],[1,"#74C69D"]],
-                        hovertemplate="Region: %{y}<br>Año: %{x}<br>%{z:,.1f} Ha<extra></extra>",
-                        colorbar=dict(tickfont=dict(color="#9EABC0",size=9),bgcolor="#12161D",bordercolor="#2B3240",thickness=10),
-                    ))
-                    fig_heat.update_layout(
-                        template="plotly_dark",paper_bgcolor="#171A21",plot_bgcolor="#171A21",
-                        margin=dict(l=10,r=10,t=5,b=10),height=310,
-                        xaxis=dict(showgrid=False,tickangle=-60,tickfont=dict(size=8)),
-                        yaxis=dict(showgrid=False,tickfont=dict(size=9)),
-                    )
-                    st.plotly_chart(fig_heat, use_container_width=True)
+            st.markdown("""
+            <div class="method-note">
+              <b>Fuente:</b> Consolidado Regional SC y P 2000–2024,
+              Ministerio de Agricultura RD. Valores originales en tareas
+              convertidos a hectáreas (1 tarea = 0.062886 Ha).
+              Línea amarilla punteada = total nacional (eje derecho).
+              La región "Este" agrupa Yuma + Higuamo + Ozama.
+            </div>""", unsafe_allow_html=True)
 
         with hs_right:
-            st.markdown('<div class="panel-title">Variacion acumulada</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">Variación acumulada</div>',
+                        unsafe_allow_html=True)
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             cambios = []
             for reg in sorted(agg_h["region"].unique()):
-                sub = agg_h[agg_h["region"]==reg].sort_values("anio")
-                v0s = sub[sub["anio"]==anio_range[0]][tipo_hist].dropna().values
-                v1s = sub[sub["anio"]==anio_range[1]][tipo_hist].dropna().values
-                if len(v0s) and len(v1s) and v0s[0]>0:
-                    cambios.append({"region":reg,"cambio":(v1s[0]-v0s[0])/v0s[0]*100,"v0":v0s[0],"v1":v1s[0]})
-            for row in sorted(cambios,key=lambda x:-x["cambio"]):
-                color = "#74C69D" if row["cambio"]>=0 else "#FF6B6B"
-                signo = "+" if row["cambio"]>=0 else ""
+                sub = agg_h[agg_h["region"] == reg].sort_values("anio")
+                v0s = sub[sub["anio"] == anio_range[0]][tipo_hist].dropna().values
+                v1s = sub[sub["anio"] == anio_range[1]][tipo_hist].dropna().values
+                if len(v0s) and len(v1s) and v0s[0] > 0:
+                    cambios.append({
+                        "region": reg,
+                        "cambio": (v1s[0] - v0s[0]) / v0s[0] * 100,
+                        "v0": v0s[0], "v1": v1s[0],
+                    })
+            for row in sorted(cambios, key=lambda x: -x["cambio"]):
+                color = "#74C69D" if row["cambio"] >= 0 else "#FF6B6B"
+                signo = "+" if row["cambio"] >= 0 else ""
                 st.markdown(f"""
                 <div style="margin-bottom:0.5rem;">
                   <div style="display:flex;justify-content:space-between;">
@@ -903,37 +943,26 @@ with tab2:
                     </span>
                   </div>
                   <div style="font-size:0.7rem;color:#6B7280;">
-                    {fmt_num(row['v0'],1)} -> {fmt_num(row['v1'],1)} Ha
+                    {fmt_num(row['v0'], 1)} → {fmt_num(row['v1'], 1)} Ha
                   </div>
                 </div>""", unsafe_allow_html=True)
-
             if not nac_h.empty:
-                v0n = nac_h[nac_h["anio"]==anio_range[0]]["valor_nacional"].values
-                v1n = nac_h[nac_h["anio"]==anio_range[1]]["valor_nacional"].values
-                if len(v0n) and len(v1n) and v0n[0]>0:
-                    cn = (v1n[0]-v0n[0])/v0n[0]*100
-                    cn_color = "#74C69D" if cn>=0 else "#FF6B6B"
+                v0n = nac_h[nac_h["anio"] == anio_range[0]]["valor_nacional"].values
+                v1n = nac_h[nac_h["anio"] == anio_range[1]]["valor_nacional"].values
+                if len(v0n) and len(v1n) and v0n[0] > 0:
+                    cn = (v1n[0] - v0n[0]) / v0n[0] * 100
+                    cn_color = "#74C69D" if cn >= 0 else "#FF6B6B"
                     st.markdown(f"""
-                    <div style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid #2B3240;
-                        text-align:center;">
-                      <div style="font-size:0.78rem;color:#9EABC0;">Nacional {anio_range[0]}–{anio_range[1]}</div>
+                    <div style="margin-top:0.8rem;padding-top:0.6rem;
+                        border-top:1px solid #2B3240;text-align:center;">
+                      <div style="font-size:0.78rem;color:#9EABC0;">
+                        Nacional {anio_range[0]}–{anio_range[1]}
+                      </div>
                       <div style="font-size:1.4rem;font-weight:700;color:{cn_color};">
-                        {'+' if cn>=0 else ''}{cn:.1f}%
+                        {signo}{cn:.1f}%
                       </div>
                     </div>""", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="method-note">
-          <b>Fuente:</b> Consolidado Regional de Siembra, Cosecha y Produccion 2000–2024,
-          Ministerio de Agricultura RD. Valores originales en Tareas convertidos a Hectareas
-          (1 tarea = 0.062886 Ha). La region "Este" agrupa Yuma + Higuamo + Ozama
-          segun la fuente original y no puede desagregarse.
-        </div>""", unsafe_allow_html=True)
-
-# ═════════════════════════════════════════════════════════════════
-# TAB 3 — PERFIL POR REGIÓN
-# ═════════════════════════════════════════════════════════════════
 
 with tab3:
 
@@ -1202,18 +1231,30 @@ with tab3:
             # Tabla limpia solo con datos directos de fuente
             st.markdown(f'<div class="panel-title" style="margin-top:0.4rem;">Datos por pilar {ftag("RENAGRO 2024")}</div>',
                         unsafe_allow_html=True)
-            tabla_reg = reg_ind[
+            # Tabla: combinar ind (pilares 1,3,4,5) + ren (pilares 2,6 ya se muestran en bloques visuales)
+            tabla_ind = reg_ind[
                 (~reg_ind["pilar"].isin(["0. Índice Compuesto","2. Uso del suelo"])) &
                 (~reg_ind["indicador"].isin(EXCLUIR_CALCULADOS))
-            ][["pilar","indicador","valor","unidad"]].copy()
+            ][["pilar","indicador","valor","unidad"]].rename(columns={"indicador":"variable"}).copy()
+
+            tabla_ren_extra = ren[
+                (ren["cod_region"]==region_sel) &
+                (ren["pilar"].isin(["1. Capacidad Productiva"])) &
+                (~ren["variable"].isin(set(tabla_ind["variable"].tolist()) | EXCLUIR_CALCULADOS))
+            ][["pilar","variable","valor","unidad"]].copy()
+
+            tabla_reg = pd.concat([tabla_ind, tabla_ren_extra.rename(columns={"variable":"indicador"})],
+                                   ignore_index=True)
             tabla_reg["pilar"] = tabla_reg["pilar"].map(PILAR_LABELS).fillna(tabla_reg["pilar"])
+
             def fix_unit(u):
-                if u in ("Tareas","Tareas/productor","Tareas/día"):
-                    return "Ha" if "productor" not in str(u) else "Ha/prod."
+                if pd.isna(u): return ""
+                if "Tarea" in str(u): return "Ha"
                 return unit_label(u)
             tabla_reg["unidad"] = tabla_reg["unidad"].apply(fix_unit)
             tabla_reg["valor"] = tabla_reg["valor"].map(
                 lambda x: f"{x:,.2f}" if pd.notna(x) else "—")
+            tabla_reg = tabla_reg[["pilar","indicador","valor","unidad"]].dropna(subset=["indicador"])
             tabla_reg.columns = ["Pilar","Indicador","Valor","Unidad"]
             st.dataframe(tabla_reg, use_container_width=True, hide_index=True, height=270)
 
