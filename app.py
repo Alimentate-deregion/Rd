@@ -199,24 +199,24 @@ EXCLUIR_CALCULADOS = {
     "Score Capacidad Productiva (0-100)",
     "Score Servicios de Apoyo (0-100)",
     "Score Financiamiento (0-100)",
-    "Score Organizacion y Vulnerabilidad (0-100)",
-    "Indice de Preparacion Territorial (0-100)",
-    "% area Arroz en total regional",
-    "% area Platano en total regional",
-    "% area Cacao en total regional",
-    "% area Cafe en total regional",
-    "% area Yuca dulce en total regional",
-    "% area Maiz en total regional",
-    "% area Cana de azucar en total regional",
-    "N cultivos con participacion >5%",
-    "Relacion trabajadores / productores",
+    "Score Organización y Vulnerabilidad (0-100)",
+    "Índice de Preparación Territorial (0-100)",
+    "% área Arroz en total regional",
+    "% área Plátano en total regional",
+    "% área Cacao en total regional",
+    "% área Café en total regional",
+    "% área Yuca dulce en total regional",
+    "% área Maíz en total regional",
+    "% área Caña de azúcar en total regional",
+    "N° cultivos con participación >5%",
+    "Relación trabajadores / productores",
     "% leche para autoconsumo",
     "% aprovechamiento Arroz",
-    "% aprovechamiento Platano",
+    "% aprovechamiento Plátano",
     "% aprovechamiento Cacao",
-    "% aprovechamiento Cafe",
+    "% aprovechamiento Café",
     "% aprovechamiento Yuca dulce",
-    "% aprovechamiento Maiz",
+    "% aprovechamiento Maíz",
     "Superficie promedio por productor",
 }
 COLORES_REG = [
@@ -286,6 +286,24 @@ def build_pivot(ind, ren):
 pivot         = build_pivot(ind, ren)
 NOMBRES_REG   = {cod: d["nombre"] for cod, d in reg_json.items()}
 
+# DataFrame unificado para el mapa (cubre todos los pilares 1-6)
+@st.cache_data(show_spinner=False)
+def build_df_mapa(ind, ren):
+    """Une ind y ren en un df con columna 'indicador' para el mapa."""
+    # ind: pilares 1,3,4,5 — columna "indicador"
+    ind_ok = ind[~ind["indicador"].isin(EXCLUIR_CALCULADOS)].copy()
+    ind_ok = ind_ok[["cod_region","region","pilar","indicador","valor","unidad"]]
+
+    # ren: pilares 2,6 — columna "variable" → renombrar a "indicador"
+    ren_extra = ren[ren["pilar"].isin([
+        "2. Uso del suelo", "6. Precenso RENAGRO 2024"
+    ])][["cod_region","region","pilar","variable","valor","unidad"]].copy()
+    ren_extra = ren_extra.rename(columns={"variable": "indicador"})
+
+    return pd.concat([ind_ok, ren_extra], ignore_index=True)
+
+df_mapa = build_df_mapa(ind, ren)
+
 # ─────────────────────────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────────────────────────
@@ -329,8 +347,8 @@ def unit_label(unidad):
 
 @st.cache_data(show_spinner=False)
 def build_mapa(ind_sel, pilar_sel, mostrar_vias):
-    sub = ind[
-        (ind["pilar"] == pilar_sel) & (ind["indicador"] == ind_sel)
+    sub = df_mapa[
+        (df_mapa["pilar"] == pilar_sel) & (df_mapa["indicador"] == ind_sel)
     ][["cod_region","valor","unidad"]].set_index("cod_region")
 
     vmin = sub["valor"].min()
@@ -519,7 +537,7 @@ with tab1:
         # Ranking
         st.markdown('<div class="panel-title">Ranking regional</div>', unsafe_allow_html=True)
         st.markdown('<div class="panel">', unsafe_allow_html=True)
-        sub_ind = ind[(ind["pilar"]==pilar_sel)&(ind["indicador"]==ind_sel)].copy()
+        sub_ind = df_mapa[(df_mapa["pilar"]==pilar_sel)&(df_mapa["indicador"]==ind_sel)].copy()
         sub_ind["nombre"] = sub_ind["cod_region"].map(NOMBRES_REG)
         rank_df = sub_ind.sort_values("valor",ascending=False).reset_index(drop=True)
         vmax_r  = rank_df["valor"].max()
