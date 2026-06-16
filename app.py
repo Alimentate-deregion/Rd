@@ -131,16 +131,17 @@ CULTIVOS_CONSOLIDADO = sorted([
 ])
 PILAR_LABELS = {
     "1. Capacidad Productiva":          "Capacidad Productiva",
+    "2. Uso del suelo":                 "Uso del suelo",
     "3. Servicios de Apoyo":            "Servicios de Apoyo",
     "4. Financiamiento":                "Financiamiento",
-    "5. Organizacion y Vulnerabilidad": "Organizacion y Vulnerabilidad",
+    "5. Organización y Vulnerabilidad": "Organización y Vulnerabilidad",
 }
 IND_DIRECTOS = {
     "1. Capacidad Productiva": [
         "Productores totales",
         "Superficie agropecuaria total",
-        "Area sembrada total cultivos RENAGRO",
-        "Produccion leche litros/dia",
+        "Área sembrada total cultivos RENAGRO",
+        "Producción leche litros/día",
         "Total fuerza laboral agropecuaria",
         "% mujeres en fuerza laboral",
         "Trabajadores hombres permanentes",
@@ -148,17 +149,28 @@ IND_DIRECTOS = {
         "Trabajadores hombres temporales",
         "Trabajadores mujeres temporales",
     ],
+    "2. Uso del suelo": [
+        "Sembradas - Cultivos temporeros",
+        "Sembradas - Cultivos permanentes",
+        "Sembradas - Pasto para el ganado",
+        "Dedicadas - Pastos naturales",
+        "Dedicadas - Bosques sembrados",
+        "Dedicadas - Montes y bosques naturales",
+        "Sin siembra - Menos de 1 año",
+        "Sin siembra - Más de 1 año",
+        "Sin usos productivos o áreas marginales",
+    ],
     "3. Servicios de Apoyo": [
-        "Parcelas con asistencia tecnica",
-        "% parcelas con asistencia tecnica",
+        "Parcelas con asistencia técnica",
+        "% parcelas con asistencia técnica",
     ],
     "4. Financiamiento": [
-        "Productores con credito",
-        "% productores con credito",
+        "Productores con crédito",
+        "% productores con crédito",
     ],
-    "5. Organizacion y Vulnerabilidad": [
-        "Productores en organizacion rural",
-        "% productores en organizacion rural",
+    "5. Organización y Vulnerabilidad": [
+        "Productores en organización rural",
+        "% productores en organización rural",
         "Productores con falta de alimento",
         "% productores con inseguridad alimentaria",
     ],
@@ -503,13 +515,13 @@ with tab1:
             unsafe_allow_html=True)
         tot_prod = ren[ren["variable"]=="Productores"]["valor"].sum()
         tot_sup  = ren[ren["variable"]=="Superficie agropecuaria"]["valor"].sum()
-        tot_at   = ren[ren["variable"]=="Parcelas con asistencia tecnica"]["valor"].sum()
-        tot_cred = ren[ren["variable"]=="Productores que recibieron credito"]["valor"].sum()
+        tot_at   = ren[ren["variable"]=="Parcelas con asistencia técnica"]["valor"].sum()
+        tot_cred = ren[ren["variable"]=="Productores que recibieron crédito"]["valor"].sum()
         for label, val, unit in [
             ("Productores",           tot_prod, ""),
             ("Sup. agropecuaria",     tot_sup,  "Ha"),
             ("Parcelas con AT",       tot_at,   ""),
-            ("Productores c/credito", tot_cred, ""),
+            ("Productores c/crédito", tot_cred, ""),
         ]:
             st.markdown(f"""
             <div class="metric-card">
@@ -536,8 +548,8 @@ with tab2:
         )
     with p2c2:
         metrica_sel = st.selectbox(
-            "Metrica (RENAGRO)",
-            ["Area sembrada","Area cosechada","Productores","Parcelas"],
+            "Métrica (RENAGRO)",
+            ["Área sembrada","Área cosechada","Productores","Parcelas"],
             key="prod_met",
         )
     with p2c3:
@@ -545,8 +557,8 @@ with tab2:
     st.markdown("</div>", unsafe_allow_html=True)
 
     UNIDAD_MET = {
-        "Area sembrada":"Ha","Area cosechada":"Ha",
-        "Productores":"Numero","Parcelas":"Numero",
+        "Área sembrada":"Ha","Área cosechada":"Ha",
+        "Productores":"Número","Parcelas":"Número",
     }
 
     # ── Datos RENAGRO ──────────────────────────────────────────
@@ -556,12 +568,16 @@ with tab2:
     # Mapear nombre de cultivo seleccionado a variable RENAGRO
     CULT_VAR_MAP = {
         "Arroz":          "Arroz",
-        "Platano":        "Platano",
+        "Plátano":        "Plátano",
+        "Platano":        "Plátano",
         "Cacao":          "Cacao",
-        "Cafe":           "Cafe",
+        "Café":           "Café",
+        "Cafe":           "Café",
         "Yuca dulce":     "Yuca dulce",
-        "Maiz":           "Maiz",
-        "Cana de azucar": "Cana de azucar",
+        "Maíz":           "Maíz",
+        "Maiz":           "Maíz",
+        "Caña de azúcar": "Caña de azúcar",
+        "Cana de azucar": "Caña de azúcar",
         "Yuca amarga":    "Yuca amarga",
     }
     cult_ren = CULT_VAR_MAP.get(cultivo_sel, cultivo_sel)
@@ -570,10 +586,17 @@ with tab2:
         sufijo = f"- {metrica_sel}"
         ren_sub = ren_named[ren_named["variable"].str.endswith(sufijo)].copy()
         ren_sub["cultivo"] = ren_sub["variable"].str.replace(f" - {metrica_sel}","",regex=False)
+        # Excluir variables de uso del suelo
+        ren_sub = ren_sub[~ren_sub["pilar"].str.contains("Uso del suelo", na=False)]
     else:
         var_q   = f"{cult_ren} - {metrica_sel}"
         ren_sub = ren_named[ren_named["variable"]==var_q].copy()
         ren_sub["cultivo"] = cultivo_sel
+        if ren_sub.empty:
+            # Intentar sin tildes (fallback)
+            var_q2 = var_q.replace("Á","A").replace("é","e").replace("í","i")
+            ren_sub = ren_named[ren_named["variable"]==var_q2].copy()
+            ren_sub["cultivo"] = cultivo_sel
 
     # ── Datos consolidado historico ────────────────────────────
     agg_hist = agg[agg["producto"]==cultivo_sel].copy() if cultivo_sel != "Todos los cultivos RENAGRO" else pd.DataFrame()
@@ -628,9 +651,9 @@ with tab2:
                 st.plotly_chart(fig_bar, use_container_width=True)
 
                 # Aprovechamiento
-                if metrica_sel in ("Area sembrada","Area cosechada"):
-                    ap_s = ren_named[ren_named["variable"]==f"{cult_ren} - Area sembrada"]
-                    ap_c = ren_named[ren_named["variable"]==f"{cult_ren} - Area cosechada"]
+                if metrica_sel in ("Área sembrada","Área cosechada"):
+                    ap_s = ren_named[ren_named["variable"]==f"{cult_ren} - Área sembrada"]
+                    ap_c = ren_named[ren_named["variable"]==f"{cult_ren} - Área cosechada"]
                     if not ap_s.empty and not ap_c.empty:
                         ap = (ap_s[["cod_region","nombre","valor"]]
                               .rename(columns={"valor":"siembra"})
@@ -946,11 +969,11 @@ with tab3:
 
         prod_v  = get_val(region_sel,"Productores totales")
         sup_v   = get_val(region_sel,"Superficie agropecuaria total")
-        at_v    = get_val(region_sel,"% parcelas con asistencia tecnica")
-        cred_v  = get_val(region_sel,"% productores con credito")
-        org_v   = get_val(region_sel,"% productores en organizacion rural")
+        at_v    = get_val(region_sel,"% parcelas con asistencia técnica")
+        cred_v  = get_val(region_sel,"% productores con crédito")
+        org_v   = get_val(region_sel,"% productores en organización rural")
         inseg_v = get_val(region_sel,"% productores con inseguridad alimentaria")
-        leche_v = get_val(region_sel,"Leche - Produccion litros/dia")
+        leche_v = get_val(region_sel,"Leche - Producción litros/día")
         muj_v   = get_val(region_sel,"% mujeres en fuerza laboral")
 
         m1,m2,m3,m4 = st.columns(4)
@@ -958,7 +981,7 @@ with tab3:
             (m1,"Productores",    prod_v,  ""),
             (m2,"Sup. Agropec.",  sup_v,   "Ha"),
             (m3,"Asist. Tecnica", at_v,    "%"),
-            (m4,"Acceso credito", cred_v,  "%"),
+            (m4,"Acceso crédito", cred_v,  "%"),
         ]:
             col.markdown(f"""
             <div class="metric-card">
@@ -974,9 +997,9 @@ with tab3:
                         unsafe_allow_html=True)
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             for label, val, color, desc in [
-                ("Asistencia tecnica", at_v,    "#74C69D", "% parcelas"),
-                ("Acceso a credito",   cred_v,  "#F5A020", "% productores"),
-                ("Organizacion rural", org_v,   "#4DA3FF", "% productores"),
+                ("Asistencia técnica", at_v,    "#74C69D", "% parcelas"),
+                ("Acceso a crédito",   cred_v,  "#F5A020", "% productores"),
+                ("Organización rural", org_v,   "#4DA3FF", "% productores"),
                 ("Inseg. alimentaria", inseg_v, "#FF6B6B", "% productores"),
                 ("Mujeres en trabajo", muj_v,   "#C77DFF", "% fuerza laboral"),
             ]:
@@ -1006,10 +1029,10 @@ with tab3:
                         unsafe_allow_html=True)
             cultivos_reg = ren[
                 (ren["cod_region"]==region_sel) &
-                (ren["variable"].str.endswith("- Area sembrada"))
+                (ren["variable"].str.endswith("- Área sembrada"))
             ].copy()
             cultivos_reg["cultivo"] = cultivos_reg["variable"].str.replace(
-                " - Area sembrada","",regex=False)
+                " - Área sembrada","",regex=False)
             cultivos_reg = cultivos_reg[cultivos_reg["valor"]>0].sort_values(
                 "valor",ascending=False)
 
@@ -1032,11 +1055,38 @@ with tab3:
                 )
                 st.plotly_chart(fig_pie, use_container_width=True)
 
+            # Uso del suelo de la región
+            uso_reg = ren[
+                (ren["cod_region"]==region_sel) &
+                (ren["pilar"]=="2. Uso del suelo")
+            ].copy()
+            if not uso_reg.empty:
+                st.markdown(
+                    f'<div class="panel-title" style="margin-top:0.5rem;">Uso del suelo {ftag("RENAGRO 2024 · Cuadro N°21")}</div>',
+                    unsafe_allow_html=True)
+                sup_total = ren[(ren["cod_region"]==region_sel)&(ren["variable"]=="Superficie agropecuaria")]["valor"].sum()
+                st.markdown('<div class="panel">', unsafe_allow_html=True)
+                for _, ur in uso_reg.sort_values("valor",ascending=False).iterrows():
+                    pct = ur["valor"]/sup_total*100 if sup_total>0 else 0
+                    color = "#74C69D" if "temporero" in ur["variable"].lower() or "permanente" in ur["variable"].lower() else "#4DA3FF" if "pasto" in ur["variable"].lower() else "#9EABC0"
+                    st.markdown(f"""
+                    <div style="margin-bottom:0.4rem;">
+                      <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
+                        <span style="color:#C7D0DD;">{ur['variable']}</span>
+                        <span style="color:{color};font-weight:600;">{pct:.1f}%</span>
+                      </div>
+                      <div style="background:#1E2530;border-radius:3px;height:5px;margin-top:2px;">
+                        <div style="width:{min(pct,100):.1f}%;height:5px;border-radius:3px;background:{color};"></div>
+                      </div>
+                      <div style="font-size:0.72rem;color:#6B7280;">{fmt_num(ur['valor'],1)} Ha</div>
+                    </div>""", unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
             # Tabla limpia solo con datos directos de fuente
             st.markdown(f'<div class="panel-title" style="margin-top:0.4rem;">Datos por pilar {ftag("RENAGRO 2024")}</div>',
                         unsafe_allow_html=True)
             tabla_reg = reg_ind[
-                (reg_ind["pilar"] != "0. Indice Compuesto") &
+                (~reg_ind["pilar"].isin(["0. Índice Compuesto","2. Uso del suelo"])) &
                 (~reg_ind["indicador"].isin(EXCLUIR_CALCULADOS))
             ][["pilar","indicador","valor","unidad"]].copy()
             tabla_reg["pilar"] = tabla_reg["pilar"].map(PILAR_LABELS).fillna(tabla_reg["pilar"])
