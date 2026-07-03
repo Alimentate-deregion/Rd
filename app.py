@@ -41,6 +41,9 @@ html,[class*="css"]{font-family:'DM Sans',sans-serif;}
 .v3{color:#27AE60;font-weight:700;}
 .score-cell{font-family:'DM Mono',monospace;font-weight:600;font-size:.82rem;}
 .s-alto{color:#27AE60;} .s-med{color:#E67E22;} .s-bajo{color:#C0392B;}
+.bg-alto{background:#C6EFCE!important;color:#006100!important;font-weight:700;}
+.bg-med{background:#FFEB9C!important;color:#9C6500!important;font-weight:700;}
+.bg-bajo{background:#FFC7CE!important;color:#9C0006!important;font-weight:700;}
 /* Sidebar */
 [data-testid="stSidebar"]{background:#F8FAF8;border-right:1px solid #E0E8E4;}
 </style>
@@ -69,6 +72,15 @@ REGIONES_ORD = ["01","02","03","04","05","06","07","08","09","10"]
 
 TIER_LABELS = {1:"Town",2:"Small city",3:"Intermediate city",4:"Large city"}
 TIER_COLORS = {1:"#81C784",2:"#388E3C",3:"#1B5E20",4:"#F57F17"}
+
+def hex_to_rgba(hex_color, alpha=0.88):
+    hex_color = str(hex_color).lstrip("#")
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    return f"rgba({r},{g},{b},{alpha})"
+
+def patch_color(tipo, fao_colors=None, alpha=0.88):
+    base = (fao_colors or {}).get(tipo, "#CCCCCC")
+    return hex_to_rgba(base, alpha)
 
 # Estructura de categorías y sus indicadores evaluados
 CATEGORIAS = {
@@ -132,41 +144,20 @@ CAT_COLORS = {
     "Competitividad y mercados":"#B71C1C",
 }
 
-# Colores METAREC para mapas y resultados: bajo rojo, intermedio amarillo, alto verde.
-def color_metarec(valor, es_eval=False, alpha=0.78):
-    if pd.isna(valor):
-        return f"rgba(217,217,217,{alpha})"
-    score = float(valor) / 3 * 100 if es_eval else float(valor)
-    if score < 60:
-        return f"rgba(198,40,40,{alpha})"
-    if score > 80:
-        return f"rgba(46,125,50,{alpha})"
-    return f"rgba(251,192,45,{alpha})"
-
-def clase_metarec(valor):
-    if pd.isna(valor):
-        return ""
-    if float(valor) < 60:
-        return "s-bajo"
-    if float(valor) > 80:
-        return "s-alto"
-    return "s-med"
-
 # ── SIDEBAR: capas del mapa ────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🗺️ Capas del mapa")
 
     # Capa de color choropleth
-    st.markdown("**Seleccione el indicador:**")
     CAPAS_CHORO = {
-        "Ninguno":                  None,
+        "Ninguno":                 None,
         "Cierre de brechas":       "score_brechas",
         "Competitividad":          "score_competitividad",
-        "Serv. de soporte":        "score_ss",
+        "Servicios de soporte":    "score_ss",
         "Capital social":          "score_cs",
-        "Tecnol. e innovación":    "score_ti",
+        "Tecnología e innovación": "score_ti",
         "Producción":              "score_pr",
-        "Compet. y mercados":      "score_cm",
+        "Competitividad y mercados":"score_cm",
         "GINI 2025":               "Indice GINI 2025_eval",
         "Inseg. alimentaria":      "% inseguridad alimentaria (productor)_eval",
         "Vulnerabilidad territorial":"Vulnerabilidad territorial_eval",
@@ -174,7 +165,7 @@ with st.sidebar:
         "Asistencia técnica":      "% parcelas con asistencia técnica_eval",
         "Volumen exportador":      "Volumen y Alcance Exportador_eval",
     }
-    capa_choro = st.selectbox("Seleccione el indicador", list(CAPAS_CHORO.keys()), key="choro", label_visibility="collapsed")
+    capa_choro = st.selectbox("Seleccione el indicador", list(CAPAS_CHORO.keys()), key="choro")
 
     st.markdown("---")
     st.markdown("**Capas FAO City-Region Explorer:**")
@@ -223,14 +214,14 @@ with st.sidebar:
                 f'{lbl}</div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown('<div style="font-size:.68rem;color:#AAA;">FAO · METAREC RD<br>RENAGRO 2024 + FAO City-Region Explorer</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:.68rem;color:#AAA;">FAO UTF-COL-178 / SARA<br>RENAGRO 2024 + FAO City-Region Explorer</div>', unsafe_allow_html=True)
 
 # ── HEADER ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="metarec-header">
   <h1>🇩🇴 METAREC — República Dominicana</h1>
-  <p>Metodología para la valoración y análisis de cadenas para la reactivación económica.
-     Adaptación metodológica para República Dominicana · 10 regiones de planificación · RENAGRO 2024 + FAO City-Region Explorer</p>
+  <p>Metodología para la valoración y análisis de cadenas para la reactivación económica
+     · Adaptación a República Dominicana · 10 regiones de planificación · RENAGRO 2024 + FAO City-Region Explorer</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -241,54 +232,60 @@ col_var_key = CAPAS_CHORO.get(capa_choro)
 def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
     fig = go.Figure()
 
-    # ── Regiones (indicador seleccionado) ────────────────────────────────────
+    # ── Regiones (choropleth) ─────────────────────────────────────────────────
     if col_var and col_var in df.columns:
         vals = df.set_index("cod_region")[col_var].to_dict()
-        serie = df[col_var].dropna()
-        es_eval = col_var.endswith("_eval") or (len(serie) > 0 and serie.max() <= 3)
+        num_vals = {k:v for k,v in vals.items() if pd.notna(v)}
+        vmin = min(num_vals.values()) if num_vals else 0
+        vmax = max(num_vals.values()) if num_vals else 3
 
         for cod, d in reg_json.items():
             v = vals.get(cod, np.nan)
-            fill = color_metarec(v, es_eval=es_eval, alpha=0.78)
-            nom = d.get("nombre", "")
-            etiqueta = nom.replace(" o Metropolitana", "")
             if pd.isna(v):
-                val_str = "—"
-            elif es_eval:
-                val_str = f"{v:.0f}"
+                fill = "rgba(200,200,200,0.3)"
             else:
-                val_str = f"{v:.0f}"
+                # Escala correcta: valores bajos = rojo, medios = amarillo/naranja, altos = verde
+                norm = (v - vmin) / (vmax - vmin + 1e-9)
+                if norm < 0.5:
+                    # Rojo -> Amarillo
+                    t = norm * 2
+                    r = int(192 + t*(245-192))
+                    g = int(57  + t*(176-57))
+                    b = int(43  + t*(65-43))
+                else:
+                    # Amarillo -> Verde
+                    t = (norm-0.5)*2
+                    r = int(245 + t*(39-245))
+                    g = int(176 + t*(174-176))
+                    b = int(65  + t*(96-65))
+                fill = f"rgba({r},{g},{b},0.58)"
+            nom = d.get("nombre","")
+            val_str = f"{v:.1f}" if not pd.isna(v) else "—"
             fig.add_trace(go.Scattermapbox(
                 lon=d["lons"], lat=d["lats"],
                 mode="lines", fill="toself",
                 fillcolor=fill,
-                line=dict(color="rgba(45,45,45,0.85)", width=1.2),
-                name=etiqueta,
-                hovertemplate=f"<b>{etiqueta}</b><br>{capa_choro}: {val_str}<extra></extra>",
+                line=dict(color="rgba(70,70,70,0.55)", width=1.1),
+                name=nom,
+                hovertemplate=f"<b>{nom}</b><br>{capa_choro}: {val_str}<extra></extra>",
                 showlegend=False,
             ))
+            # Etiqueta
             fig.add_trace(go.Scattermapbox(
                 lon=[d["cx"]], lat=[d["cy"]], mode="text",
-                text=[etiqueta],
-                textfont=dict(size=9.5, color="#263238"),
+                text=[nom],
+                textfont=dict(size=9.5, color="#1B4332"),
                 hoverinfo="skip", showlegend=False,
             ))
     else:
-        # Sin indicador: polígonos claros, sólo límites y etiqueta
+        # Sin capa: solo bordes
         for cod, d in reg_json.items():
-            nom = d.get("nombre", "")
-            etiqueta = nom.replace(" o Metropolitana", "")
+            nom = d.get("nombre","")
             fig.add_trace(go.Scattermapbox(
                 lon=d["lons"], lat=d["lats"], mode="lines",
-                fill="toself", fillcolor="rgba(230,238,230,0.24)",
-                line=dict(color="rgba(60,80,60,0.85)", width=1.2),
-                name=etiqueta, hovertemplate=f"<b>{etiqueta}</b><extra></extra>", showlegend=False,
-            ))
-            fig.add_trace(go.Scattermapbox(
-                lon=[d["cx"]], lat=[d["cy"]], mode="text",
-                text=[etiqueta],
-                textfont=dict(size=9.5, color="#263238"),
-                hoverinfo="skip", showlegend=False,
+                fill="toself", fillcolor="rgba(255,255,255,0.08)",
+                line=dict(color="rgba(70,70,70,0.55)", width=1.1),
+                name=nom, hovertemplate=f"<b>{nom}</b><extra></extra>", showlegend=False,
             ))
 
     # ── Centros urbanos ────────────────────────────────────────────────────────
@@ -299,7 +296,7 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
             size  = {1:7,2:10,3:14,4:20}.get(tier,7)
             fig.add_trace(go.Scattermapbox(
                 lon=[cu["cx"]], lat=[cu["cy"]], mode="markers",
-                marker=dict(size=size, color=color, opacity=0.92),
+                marker=dict(size=size, color=color, opacity=0.95, sizemode="diameter"),
                 name=TIER_LABELS.get(tier,""),
                 text=cu["name"],
                 hovertemplate=(
@@ -310,18 +307,18 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
                 showlegend=False,
             ))
 
-    # ── Patches FAO: arriba del indicador y con transparencia mínima ─────────
+    # ── Patches FAO ───────────────────────────────────────────────────────────
     if mostrar_patches and cutoff_sel in _fao["patches"]:
         por_tipo = _fao["patches"][cutoff_sel]
         for tipo, coords in sorted(por_tipo.items()):
-            color = _fao["fao_colors"].get(tipo, "#CCCCCC")
+            color = patch_color(tipo, _fao.get("fao_colors", {}), 0.88)
             desc  = _fao.get("tier_desc",{}).get(tipo, str(tipo))
             fig.add_trace(go.Scattermapbox(
                 lon=coords["lons"], lat=coords["lats"],
                 mode="lines", fill="toself",
                 fillcolor=color,
-                line=dict(color="rgba(255,255,255,0.55)", width=0.45),
-                opacity=0.94,
+                line=dict(color="rgba(80,80,80,0.45)", width=0.45),
+                opacity=1,
                 name=f"{tipo} — {desc}",
                 hovertemplate=f"<b>{desc}</b><br>Tipo: {tipo}<br>Travel time: {cutoff_sel}<extra></extra>",
                 showlegend=False,
@@ -416,8 +413,8 @@ with col_rank:
 
     def badge(v):
         if pd.isna(v): return "—"
-        cls = clase_metarec(v)
-        return f'<span class="score-cell {cls}">{v:.0f}</span>'
+        cls = "bg-alto" if v>80 else "bg-bajo" if v<60 else "bg-med"
+        return f'<span class="score-cell {cls}" style="display:inline-block;min-width:42px;border-radius:3px;padding:.08rem .25rem;">{v:.0f}</span>'
 
     html_rk = '<table class="eval-tbl"><tr><th>#</th><th style="text-align:left">Región</th><th>Brechas</th><th>Competitividad</th></tr>'
     for i, (_, row) in enumerate(df_rk.iterrows(), 1):
@@ -431,7 +428,7 @@ st.markdown('<div class="sec-title">Matriz evaluada por indicador (calificación
 
 # Encabezados de tabla
 reg_headers = "".join(f'<th>{REG_NOMBRES[c].replace(" o Metropolitana","")}</th>' for c in REGIONES_ORD)
-html_tbl = f'<table class="eval-tbl"><tr><th style="text-align:left;min-width:160px">Categoría / Indicador</th>{reg_headers}<th>Puntaje</th></tr>'
+html_tbl = f'<table class="eval-tbl"><tr><th style="text-align:left;min-width:160px">Categoría / Indicador</th>{reg_headers}<th>Resultado</th></tr>'
 
 def vhtml(v):
     if v is None or (isinstance(v,float) and np.isnan(v)): return '<td>—</td>'
@@ -449,7 +446,7 @@ for cat, inds in CATEGORIAS.items():
     )
     score_vals = df.set_index("cod_region")[score_key]
     scores_html = "".join(
-        f'<td class="score-cell {clase_metarec(score_vals.get(c, np.nan))}">{score_vals.get(c, np.nan):.0f}</td>'
+        f'<td class="score-cell {"bg-alto" if score_vals.get(c,0)>80 else "bg-bajo" if score_vals.get(c,0)<60 else "bg-med"}">{score_vals.get(c,0):.0f}</td>'
         for c in REGIONES_ORD
     )
     html_tbl += f'<tr class="cat-hdr"><td colspan="1" style="border-left:4px solid {cat_color};padding-left:.6rem;">{cat}</td>{scores_html}<td></td></tr>'
@@ -462,27 +459,30 @@ for cat, inds in CATEGORIAS.items():
         tds = "".join(vhtml(vals_row.get(c, np.nan)) for c in REGIONES_ORD)
         html_tbl += f'<tr><td class="ind-name" style="padding-left:1rem;">{lbl}</td>{tds}<td></td></tr>'
 
-# Fila de scores globales
-html_tbl += '<tr style="background:#1B4332;color:white;font-weight:700;"><td style="color:white;text-align:left;">TOTAL ENTORNO</td>'
+# Filas de scores globales y variables transformadoras
+def score_bg(v):
+    if pd.isna(v):
+        return ""
+    return "bg-alto" if v > 80 else "bg-bajo" if v < 60 else "bg-med"
+
+html_tbl += '<tr style="font-weight:700;"><td style="text-align:left;">TOTAL ENTORNO</td>'
 for c in REGIONES_ORD:
     tot_row = df[df["cod_region"]==c]
     all_scores = [tot_row[k].values[0] if k in tot_row.columns else np.nan for k in SCORE_COLS.values()]
     total = np.nanmean(all_scores)
-    html_tbl += f'<td style="color:white;font-family:DM Mono,monospace;">{total:.0f}</td>'
+    html_tbl += f'<td class="score-cell {score_bg(total)}">{total:.0f}</td>'
 html_tbl += '<td></td></tr>'
 
-# Totales por región de las variables transformadoras
-html_tbl += '<tr style="background:#EEF6EF;font-weight:700;"><td style="text-align:left;">TOTAL VARIABLES TRANSFORMADORAS — CIERRE DE BRECHAS SOCIALES</td>'
-for c in REGIONES_ORD:
-    v = df.set_index("cod_region").get("score_brechas", pd.Series(dtype=float)).get(c, np.nan)
-    html_tbl += f'<td class="score-cell {clase_metarec(v)}">{v:.0f}</td>'
-html_tbl += '<td></td></tr>'
-
-html_tbl += '<tr style="background:#EEF6EF;font-weight:700;"><td style="text-align:left;">TOTAL VARIABLES TRANSFORMADORAS — COMPETITIVIDAD</td>'
-for c in REGIONES_ORD:
-    v = df.set_index("cod_region").get("score_competitividad", pd.Series(dtype=float)).get(c, np.nan)
-    html_tbl += f'<td class="score-cell {clase_metarec(v)}">{v:.0f}</td>'
-html_tbl += '<td></td></tr>'
+for label, col_score in [
+    ("TOTAL VARIABLES TRANSFORMADORAS PARA CIERRE DE BRECHAS SOCIALES", "score_brechas"),
+    ("TOTAL VARIABLES TRANSFORMADORAS PARA COMPETITIVIDAD", "score_competitividad"),
+]:
+    html_tbl += f'<tr style="font-weight:700;"><td style="text-align:left;">{label}</td>'
+    score_vals = df.set_index("cod_region")[col_score] if col_score in df.columns else pd.Series(dtype=float)
+    for c in REGIONES_ORD:
+        val = score_vals.get(c, np.nan)
+        html_tbl += f'<td class="score-cell {score_bg(val)}">{val:.0f}</td>' if pd.notna(val) else '<td>—</td>'
+    html_tbl += '<td></td></tr>'
 
 html_tbl += "</table>"
 
@@ -492,7 +492,7 @@ st.markdown(f'<div style="overflow-x:auto;">{html_tbl}</div>', unsafe_allow_html
 st.markdown("""
 <div style="text-align:center;font-size:.7rem;color:#B0B0B0;margin-top:1.5rem;
   padding-top:1rem;border-top:1px solid #EEE;">
-  METAREC · República Dominicana · Adaptación metodológica ·
+  METAREC · Adaptación República Dominicana · FAO UTF-COL-178 / SARA ·
   RENAGRO 2024 · Precenso RENAGRO 2024 · FAO City-Region Explorer (Cattaneo et al., 2024)
   · ProDominicana · ONE/ENFT · DIGEPRES/MEPYD
 </div>""", unsafe_allow_html=True)
