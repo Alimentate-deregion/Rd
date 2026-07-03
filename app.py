@@ -244,17 +244,20 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
             if pd.isna(v):
                 fill = "rgba(200,200,200,0.3)"
             else:
+                # Escala correcta: valores bajos = rojo, medios = amarillo/naranja, altos = verde
                 norm = (v - vmin) / (vmax - vmin + 1e-9)
                 if norm < 0.5:
+                    # Rojo -> Amarillo
                     t = norm * 2
-                    r = int(40  + t*(255-40))
-                    g = int(140 + t*(210-140))
-                    b = int(60  - t*60)
+                    r = int(192 + t*(245-192))
+                    g = int(57  + t*(176-57))
+                    b = int(43  + t*(65-43))
                 else:
+                    # Amarillo -> Verde
                     t = (norm-0.5)*2
-                    r = 255
-                    g = int(210 - t*185)
-                    b = 0
+                    r = int(245 + t*(39-245))
+                    g = int(176 + t*(174-176))
+                    b = int(65  + t*(96-65))
                 fill = f"rgba({r},{g},{b},0.58)"
             nom = d.get("nombre","")
             val_str = f"{v:.1f}" if not pd.isna(v) else "—"
