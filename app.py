@@ -73,20 +73,13 @@ REGIONES_ORD = ["01","02","03","04","05","06","07","08","09","10"]
 TIER_LABELS = {1:"Town",2:"Small city",3:"Intermediate city",4:"Large city"}
 TIER_COLORS = {1:"#81C784",2:"#388E3C",3:"#1B5E20",4:"#F57F17"}
 
-# Paleta más neutra para los patches FAO.
-# La intención es que funcionen como contexto espacial y no compitan con el indicador regional.
-PATCH_NEUTRAL_COLORS = [
-    "#6B7280", "#8B7355", "#7A8499", "#6F7D6A",
-    "#9A8C7C", "#7E7896", "#8A8F7A", "#6D7F8F"
-]
-
-def hex_to_rgba(hex_color, alpha=0.18):
-    hex_color = hex_color.lstrip("#")
+def hex_to_rgba(hex_color, alpha=0.88):
+    hex_color = str(hex_color).lstrip("#")
     r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     return f"rgba({r},{g},{b},{alpha})"
 
-def patch_color(tipo, alpha=0.18):
-    base = PATCH_NEUTRAL_COLORS[abs(int(tipo)) % len(PATCH_NEUTRAL_COLORS)]
+def patch_color(tipo, fao_colors=None, alpha=0.88):
+    base = (fao_colors or {}).get(tipo, "#CCCCCC")
     return hex_to_rgba(base, alpha)
 
 # Estructura de categorías y sus indicadores evaluados
@@ -205,7 +198,7 @@ with st.sidebar:
         }
         for tipo_str, desc in tipos_legend.items():
             tipo = int(tipo_str)
-            color = patch_color(tipo, 0.45)
+            color = fao["fao_colors"].get(tipo,"#CCC")
             st.markdown(
                 f'<div style="display:flex;align-items:center;gap:6px;font-size:.72rem;margin:.15rem 0;">'
                 f'<div style="width:14px;height:10px;border-radius:2px;background:{color};flex-shrink:0;"></div>'
@@ -292,23 +285,6 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
                 name=nom, hovertemplate=f"<b>{nom}</b><extra></extra>", showlegend=False,
             ))
 
-    # ── Patches FAO ───────────────────────────────────────────────────────────
-    if mostrar_patches and cutoff_sel in _fao["patches"]:
-        por_tipo = _fao["patches"][cutoff_sel]
-        for tipo, coords in sorted(por_tipo.items()):
-            color = patch_color(tipo, 0.18)
-            desc  = _fao.get("tier_desc",{}).get(tipo, str(tipo))
-            fig.add_trace(go.Scattermapbox(
-                lon=coords["lons"], lat=coords["lats"],
-                mode="lines", fill="toself",
-                fillcolor=color,
-                line=dict(color="rgba(80,80,80,0.22)", width=0.35),
-                opacity=1,
-                name=f"{tipo} — {desc}",
-                hovertemplate=f"<b>{desc}</b><br>Tipo: {tipo}<br>Travel time: {cutoff_sel}<extra></extra>",
-                showlegend=False,
-            ))
-
     # ── Centros urbanos ────────────────────────────────────────────────────────
     if mostrar_cu:
         for cu in _fao["urban_centres"]:
@@ -325,6 +301,23 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
                     f"Tier: {TIER_LABELS.get(tier,'')}<br>"
                     f"Pob. (GHS-POP 2020): {int(cu.get('ghspop',0) or 0):,}<extra></extra>"
                 ),
+                showlegend=False,
+            ))
+
+    # ── Patches FAO ───────────────────────────────────────────────────────────
+    if mostrar_patches and cutoff_sel in _fao["patches"]:
+        por_tipo = _fao["patches"][cutoff_sel]
+        for tipo, coords in sorted(por_tipo.items()):
+            color = patch_color(tipo, _fao.get("fao_colors", {}), 0.88)
+            desc  = _fao.get("tier_desc",{}).get(tipo, str(tipo))
+            fig.add_trace(go.Scattermapbox(
+                lon=coords["lons"], lat=coords["lats"],
+                mode="lines", fill="toself",
+                fillcolor=color,
+                line=dict(color="rgba(80,80,80,0.45)", width=0.45),
+                opacity=1,
+                name=f"{tipo} — {desc}",
+                hovertemplate=f"<b>{desc}</b><br>Tipo: {tipo}<br>Travel time: {cutoff_sel}<extra></extra>",
                 showlegend=False,
             ))
 
