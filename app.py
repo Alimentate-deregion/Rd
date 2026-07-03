@@ -230,9 +230,8 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
             fig.add_trace(go.Scattermapbox(
                 lon=coords["lons"], lat=coords["lats"],
                 mode="lines", fill="toself",
-                fillcolor=color.replace("#","rgba(") if False else color,
-                line=dict(color="rgba(255,255,255,0.25)", width=0.4),
                 fillcolor=color,
+                line=dict(color="rgba(255,255,255,0.25)", width=0.4),
                 opacity=0.55,
                 name=f"{tipo} — {desc}",
                 hovertemplate=f"<b>{desc}</b><br>Tipo: {tipo}<br>Travel time: {cutoff_sel}<extra></extra>",
