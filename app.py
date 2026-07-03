@@ -82,6 +82,35 @@ def patch_color(tipo, fao_colors=None, alpha=0.88):
     base = (fao_colors or {}).get(tipo, "#CCCCCC")
     return hex_to_rgba(base, alpha)
 
+
+# ── Indicador ajustado: área agropecuaria disponible ─────────────────────────
+def _eval_terciles_mayor_mejor(serie):
+    serie = pd.to_numeric(serie, errors="coerce")
+    if serie.notna().sum() == 0:
+        return np.nan
+    p33 = serie.quantile(1/3)
+    p66 = serie.quantile(2/3)
+    return np.where(serie >= p66, 3, np.where(serie <= p33, 1, 2))
+
+# Reemplaza el indicador proporcional anterior por un indicador absoluto.
+# Prioriza el área sembrada total: cultivos temporeros + cultivos permanentes.
+# Si esas columnas no están disponibles, usa superficie agropecuaria como respaldo.
+_area_temp = "Sembradas con cultivos temporeros"
+_area_perm = "Sembradas con cultivos permanentes"
+_area_agro = "Superficie agropecuaria (Ha)"
+_nuevo_ind_area = "Área agropecuaria disponible"
+_nuevo_eval_area = "Área agropecuaria disponible_eval"
+
+if _area_temp in df.columns and _area_perm in df.columns:
+    df[_nuevo_ind_area] = pd.to_numeric(df[_area_temp], errors="coerce").fillna(0) + pd.to_numeric(df[_area_perm], errors="coerce").fillna(0)
+elif _area_agro in df.columns:
+    df[_nuevo_ind_area] = pd.to_numeric(df[_area_agro], errors="coerce")
+
+if _nuevo_ind_area in df.columns:
+    df[_nuevo_eval_area] = _eval_terciles_mayor_mejor(df[_nuevo_ind_area])
+elif "% área sembrada c/cultivos perm+temp_eval" in df.columns:
+    df[_nuevo_eval_area] = df["% área sembrada c/cultivos perm+temp_eval"]
+
 # Estructura de categorías y sus indicadores evaluados
 CATEGORIAS = {
     "Servicios de soporte": [
@@ -107,7 +136,7 @@ CATEGORIAS = {
         ("Tecnificación riego",  "% Tecnificación (riego)_eval"),
     ],
     "Producción": [
-        ("Área sembrada",        "% área sembrada c/cultivos perm+temp_eval"),
+        ("Área agropecuaria disponible", "Área agropecuaria disponible_eval"),
         ("Actividad agrícola",   "% actividad agrícola principal_eval"),
         ("Actividad ganadera",   "% actividad ganadera principal_eval"),
         ("UA < 1 Ha",            "% UA menores de 1 Ha_eval"),
@@ -164,6 +193,7 @@ with st.sidebar:
         "Crédito":                 "% productores con crédito_eval",
         "Asistencia técnica":      "% parcelas con asistencia técnica_eval",
         "Volumen exportador":      "Volumen y Alcance Exportador_eval",
+        "Área agropecuaria disponible": "Área agropecuaria disponible",
     }
     capa_choro = st.selectbox("Seleccione el indicador", list(CAPAS_CHORO.keys()), key="choro")
 
