@@ -73,6 +73,22 @@ REGIONES_ORD = ["01","02","03","04","05","06","07","08","09","10"]
 TIER_LABELS = {1:"Town",2:"Small city",3:"Intermediate city",4:"Large city"}
 TIER_COLORS = {1:"#81C784",2:"#388E3C",3:"#1B5E20",4:"#F57F17"}
 
+# Paleta más neutra para los patches FAO.
+# La intención es que funcionen como contexto espacial y no compitan con el indicador regional.
+PATCH_NEUTRAL_COLORS = [
+    "#6B7280", "#8B7355", "#7A8499", "#6F7D6A",
+    "#9A8C7C", "#7E7896", "#8A8F7A", "#6D7F8F"
+]
+
+def hex_to_rgba(hex_color, alpha=0.18):
+    hex_color = hex_color.lstrip("#")
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    return f"rgba({r},{g},{b},{alpha})"
+
+def patch_color(tipo, alpha=0.18):
+    base = PATCH_NEUTRAL_COLORS[abs(int(tipo)) % len(PATCH_NEUTRAL_COLORS)]
+    return hex_to_rgba(base, alpha)
+
 # Estructura de categorías y sus indicadores evaluados
 CATEGORIAS = {
     "Servicios de soporte": [
@@ -141,7 +157,7 @@ with st.sidebar:
 
     # Capa de color choropleth
     CAPAS_CHORO = {
-        "— Sin colorear —":        None,
+        "Ninguno":                 None,
         "Cierre de brechas":       "score_brechas",
         "Competitividad":          "score_competitividad",
         "Servicios de soporte":    "score_ss",
@@ -189,7 +205,7 @@ with st.sidebar:
         }
         for tipo_str, desc in tipos_legend.items():
             tipo = int(tipo_str)
-            color = fao["fao_colors"].get(tipo,"#CCC")
+            color = patch_color(tipo, 0.45)
             st.markdown(
                 f'<div style="display:flex;align-items:center;gap:6px;font-size:.72rem;margin:.15rem 0;">'
                 f'<div style="width:14px;height:10px;border-radius:2px;background:{color};flex-shrink:0;"></div>'
@@ -246,14 +262,14 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
                     r = 255
                     g = int(210 - t*185)
                     b = 0
-                fill = f"rgba({r},{g},{b},0.75)"
+                fill = f"rgba({r},{g},{b},0.58)"
             nom = d.get("nombre","")
             val_str = f"{v:.1f}" if not pd.isna(v) else "—"
             fig.add_trace(go.Scattermapbox(
                 lon=d["lons"], lat=d["lats"],
                 mode="lines", fill="toself",
                 fillcolor=fill,
-                line=dict(color="rgba(255,255,255,0.7)", width=1.2),
+                line=dict(color="rgba(70,70,70,0.55)", width=1.1),
                 name=nom,
                 hovertemplate=f"<b>{nom}</b><br>{capa_choro}: {val_str}<extra></extra>",
                 showlegend=False,
@@ -271,8 +287,8 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
             nom = d.get("nombre","")
             fig.add_trace(go.Scattermapbox(
                 lon=d["lons"], lat=d["lats"], mode="lines",
-                fill="toself", fillcolor="rgba(100,130,100,0.15)",
-                line=dict(color="rgba(255,255,255,0.5)", width=1.2),
+                fill="toself", fillcolor="rgba(255,255,255,0.08)",
+                line=dict(color="rgba(70,70,70,0.55)", width=1.1),
                 name=nom, hovertemplate=f"<b>{nom}</b><extra></extra>", showlegend=False,
             ))
 
@@ -280,14 +296,14 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
     if mostrar_patches and cutoff_sel in _fao["patches"]:
         por_tipo = _fao["patches"][cutoff_sel]
         for tipo, coords in sorted(por_tipo.items()):
-            color = _fao["fao_colors"].get(tipo, "#CCCCCC")
+            color = patch_color(tipo, 0.18)
             desc  = _fao.get("tier_desc",{}).get(tipo, str(tipo))
             fig.add_trace(go.Scattermapbox(
                 lon=coords["lons"], lat=coords["lats"],
                 mode="lines", fill="toself",
                 fillcolor=color,
-                line=dict(color="rgba(255,255,255,0.25)", width=0.4),
-                opacity=0.55,
+                line=dict(color="rgba(80,80,80,0.22)", width=0.35),
+                opacity=1,
                 name=f"{tipo} — {desc}",
                 hovertemplate=f"<b>{desc}</b><br>Tipo: {tipo}<br>Travel time: {cutoff_sel}<extra></extra>",
                 showlegend=False,
@@ -301,7 +317,7 @@ def build_mapa(col_var, mostrar_cu, mostrar_patches, cutoff_sel, _fao):
             size  = {1:7,2:10,3:14,4:20}.get(tier,7)
             fig.add_trace(go.Scattermapbox(
                 lon=[cu["cx"]], lat=[cu["cy"]], mode="markers",
-                marker=dict(size=size, color=color, opacity=0.92),
+                marker=dict(size=size, color=color, opacity=0.95, sizemode="diameter"),
                 name=TIER_LABELS.get(tier,""),
                 text=cu["name"],
                 hovertemplate=(
