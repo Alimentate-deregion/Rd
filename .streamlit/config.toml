@@ -1,9 +1,5 @@
-[theme]
-base = "light"
-primaryColor = "#1B6B3A"
-backgroundColor = "#F8FAF8"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1C1C1C"
 [server]
 headless = true
 enableCORS = false
+[theme]
+base = "light"
