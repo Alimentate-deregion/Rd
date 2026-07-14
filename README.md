@@ -1,6 +1,8 @@
-# Visor METAREC República Dominicana v8
+# METAREC República Dominicana · v9
 
-- Mapa base OpenStreetMap sin clave API.
-- Geometrías regionales corregidas para mostrar las 10 regiones completas.
-- Resultados de entorno, cierre de brechas y competitividad con escala común: rojo (<60), amarillo (60–79,9) y verde (≥80).
-- Capas locales incorporadas en el visor.
+Versión actualizada con:
+- Geovisor METAREC limitado a variables transformadoras.
+- Cierre de brechas y competitividad como únicas capas de resultados.
+- Resultados actualizados desde Matriz_Variables_Territoriales_RD_v14(1).xlsx.
+- Escala cromática estándar: rojo < 60, amarillo 60–72 y verde > 72.
+- Tabla consolidada únicamente con variables transformadoras y puntajes.
