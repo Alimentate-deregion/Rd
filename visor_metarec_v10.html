@@ -438,6 +438,7 @@ var IND_RAMPS = {
 var indSrc={};
 
 function tgInd(sid,ind,vis) {
+  try {
   if(!vis){if(map.getLayer(sid))map.setLayoutProperty(sid,"visibility","none");return;}
   if(indSrc[sid]){map.setLayoutProperty(sid,"visibility","visible");return;}
   var cat=""; for(var c in CATS){if(CATS[c].indexOf(ind)>=0){cat=c;break;}}
@@ -453,7 +454,7 @@ function tgInd(sid,ind,vis) {
   }
   map.addSource("s-"+sid,{type:"geojson",data:{type:"FeatureCollection",features:feats}});
   map.addLayer({id:sid, type:"fill", source:"s-"+sid,
-    paint:{"fill-color":["step",["get","ev"],ramp[0],1.5,ramp[1],2.5,ramp[2],2.8,ramp[3]],"fill-opacity":0.75},
+    paint:{"fill-color":["step",["get","ev"],"#BDBDBD",0.5,"#D95F59",1.5,"#F3C969",2.5,"#5AAE61"],"fill-opacity":0.82,"fill-outline-color":"#FFFFFF"},
     layout:{visibility:"visible"}});
   indSrc[sid]=true;
   var tt2=document.getElementById("tt");
@@ -463,12 +464,18 @@ function tgInd(sid,ind,vis) {
     var ev=p.ev; tt2.innerHTML="<b>"+p.nombre+"</b><br>"+ind+"<br>"+(ev>=3?"&#9650;3":ev>=2?"&#9670;2":"&#9660;1");
   });
   map.on("mouseleave",sid,function(){document.getElementById("tt").style.display="none";});
+  } catch(err) {
+    console.error("Error activando indicador", ind, err);
+    var ttErr=document.getElementById("tt");
+    if(ttErr){ttErr.style.display="block";ttErr.style.left="300px";ttErr.style.top="80px";ttErr.innerHTML="<b>Error al cargar el indicador</b><br>"+ind+"<br>"+err.message;}
+  }
 }
 
 function makeIndItem(ind, prefix) {
   var sid = prefix + ind.replace(/[^a-zA-Z0-9]/g,"_");
+  var encodedInd = encodeURIComponent(ind);
   return '<div class="ly" onclick="tgC(\'c'+sid+'\')">'+
-    '<input type="checkbox" class="lcb" onchange="tgInd(\''+sid+'\','+JSON.stringify(ind)+',this.checked)" onclick="event.stopPropagation()">'+
+    '<input type="checkbox" class="lcb" data-ind="'+encodedInd+'" onchange="tgInd(\''+sid+'\',decodeURIComponent(this.dataset.ind),this.checked)" onclick="event.stopPropagation()">'+
     '<span class="ll" style="font-size:.67rem">'+ind+'</span></div>'+
     '<div class="ct" id="ct-c'+sid+'">'+
       '<div class="or">Opacidad <input type="range" min="0" max="100" value="75" oninput="soM(\''+sid+'\',this.value);this.nextElementSibling.textContent=\' \'+this.value+\'%\'"><span> 75%</span></div>'+

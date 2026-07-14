@@ -9,3 +9,5 @@
 - Escala estándar: rojo <60, amarillo 60–72 y verde >72.
 
 - Corrección de códigos regionales para activar correctamente los indicadores individuales.
+
+- Corrección del evento onchange de los 14 indicadores individuales; antes el HTML se truncaba por comillas anidadas.
