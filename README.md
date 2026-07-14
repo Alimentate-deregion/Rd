@@ -7,3 +7,5 @@
 - Tabla completa con los 31 indicadores y los puntajes consolidados.
 - Resultados actualizados desde Matriz_Variables_Territoriales_RD_v14(1).xlsx.
 - Escala estándar: rojo <60, amarillo 60–72 y verde >72.
+
+- Corrección de códigos regionales para activar correctamente los indicadores individuales.

@@ -386,7 +386,7 @@ function buildInteractions(defs) {
       map.on("mouseleave","r-"+def.k, function(){map.getCanvas().style.cursor="";tt.style.display="none";});
       map.on("click","r-"+def.k, function(e) {
         var p=e.features[0].properties;
-        var d=DATOS[p.cod_region]; if(!d) return;
+        var pcod=String(p.cod_region); if(pcod.length<2) pcod="0"+pcod; var d=DATOS[pcod]; if(!d) return;
         var s=d.scores;
         function bar(v){ var bg=v>=70?"#27AE60":v>=55?"#E67E22":"#C0392B"; return '<span class="sb" style="width:'+(v||0)*.65+'px;background:'+bg+'"></span>'; }
         pop.setLngLat(e.lngLat).setHTML(
@@ -445,7 +445,8 @@ function tgInd(sid,ind,vis) {
   var feats=[];
   for(var fi=0;fi<REGIONES.features.length;fi++){
     var f=REGIONES.features[fi];
-    var cod=f.properties.cod_region;
+    var cod=String(f.properties.cod_region);
+    if(cod.length<2) cod="0"+cod;
     var ev=(DATOS[cod]&&DATOS[cod].indicadores&&DATOS[cod].indicadores[ind])?DATOS[cod].indicadores[ind].eval||0:0;
     var np={}; for(var k in f.properties) np[k]=f.properties[k]; np.ev=ev;
     feats.push({type:"Feature",properties:np,geometry:f.geometry});
