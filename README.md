@@ -1,8 +1,6 @@
-# METAREC República Dominicana v7
+# Visor METAREC República Dominicana v8
 
-- Geovisor con capas locales GeoJSON/KMZ/Parquet.
-- Resultados consolidados: ranking a la izquierda; matriz transpuesta, puntajes totales y telarañas a la derecha.
-- `Datos/metarec_resultados_v14.parquet`: resultados METAREC en formato largo.
-- `Datos/mapspam_areas.geojson`: celdas-área derivadas de la malla MAPSPAM incluida en el visor.
-
-Archivo principal de Streamlit: `app.py`.
+- Mapa base OpenStreetMap sin clave API.
+- Geometrías regionales corregidas para mostrar las 10 regiones completas.
+- Resultados de entorno, cierre de brechas y competitividad con escala común: rojo (<60), amarillo (60–79,9) y verde (≥80).
+- Capas locales incorporadas en el visor.

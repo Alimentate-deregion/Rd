@@ -12,7 +12,7 @@ footer{display:none!important}
 iframe{border:none!important}
 </style>""", unsafe_allow_html=True)
 
-html_path = os.path.join(os.path.dirname(__file__), "visor_metarec_v7.html")
+html_path = os.path.join(os.path.dirname(__file__), "visor_metarec_v8.html")
 with open(html_path, encoding="utf-8") as f:
     html = f.read()
 components.html(html, height=1250, scrolling=True)
